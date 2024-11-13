@@ -27,17 +27,36 @@ variable "core_alb_sg_id" {
 # META TG 목록
 # Inject variables : x
 variable "core_alb_tg" {
-  type = list(object({
-    name     = string
+  type = map(object({
     type     = string
     category = string
     port     = number
     api_type = string
   }))
-  default = [
-    { name = "core-search-api-alb-app-tg-test", type = "alb", category = "app", port = 10091, api_type = "search" },
-    { name = "core-meta-api-alb-app-tg-test", type = "alb", category = "app", port = 10092, api_type = "meta" },
-    { name = "core-user-api-alb-app-tg-test", type = "alb", category = "app", port = 10093, api_type = "user" },
-    { name = "core-cur-api-alb-app-tg-test", type = "alb", category = "app", port = 10094, api_type = "curation" },
-  ]
+  default = {
+    "search-api" = {
+      type     = "alb",
+      category = "app",
+      port     = 10091,
+      api_type = "search"
+    },
+    "meta-api" = {
+      type     = "alb",
+      category = "app",
+      port     = 10092,
+      api_type = "meta"
+    },
+    "user-api" = {
+      type     = "alb",
+      category = "app",
+      port     = 10093,
+      api_type = "user"
+    },
+    "curation-api" = {
+      type     = "alb",
+      category = "app",
+      port     = 10094,
+      api_type = "curation"
+    }
+  }
 }
