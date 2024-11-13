@@ -1,11 +1,13 @@
 # ALB Public Subnet 목록
+# Inject variables : o
 variable "vpc_id" {
   type        = string
   description = "VPC ID"
 }
 
 # ALB 퍼블릭 서브넷 목록
-variable "core_api_alb_public_subnets" {
+# Inject variables : x
+variable "core_alb_public_subnets" {
   type        = list(string)
   description = "ALB 퍼블릭 서브넷 목록"
   default = [
@@ -16,13 +18,15 @@ variable "core_api_alb_public_subnets" {
 }
 
 # ALB SG ID
-variable "core_api_alb_test_sg_id" {
+# Inject variables : o
+variable "core_alb_sg_id" {
   type        = string
   description = "검색 ALB SG ID"
 }
 
 # META TG 목록
-variable "core_api_alb_tg_test_metas" {
+# Inject variables : x
+variable "core_alb_tg" {
   type = list(object({
     name     = string
     type     = string

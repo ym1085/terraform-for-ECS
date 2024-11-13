@@ -3,8 +3,8 @@ resource "aws_lb" "core-api-alb-test" {
   name               = "core-api-alb-test"
   internal           = false
   load_balancer_type = "application"
-  subnets            = var.core_api_alb_public_subnets # TODO: 변수로 받아야함
-  security_groups    = [var.core_api_alb_test_sg_id]   # TODO: 변수로 받아야함
+  subnets            = var.core_alb_meta_public_subnets # TODO: 변수로 받아야함
+  security_groups    = [var.core_alb_meta_sg_id]        # TODO: 변수로 받아야함
 
   enable_deletion_protection = true
 
@@ -33,7 +33,7 @@ resource "aws_lb_listener" "core-api-alb-listener-test" {
 
 # Application Load Balancer Target Group List
 resource "aws_lb_target_group" "core-api-tg-test" {
-  for_each = { for idx, target_group in var.core_api_alb_tg_test_metas : target_group.name => target_group }
+  for_each = { for idx, target_group in var.core_alb_meta_tg : target_group.name => target_group }
 
   name        = each.value.name
   port        = each.value.port

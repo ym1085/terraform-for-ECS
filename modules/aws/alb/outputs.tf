@@ -1,4 +1,3 @@
-
 # AWS ALB DNS
 output "alb_dns_nam" {
   value = aws_lb.core-api-alb-test.dns_name
