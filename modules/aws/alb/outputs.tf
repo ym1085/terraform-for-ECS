@@ -1,14 +1,14 @@
 # AWS ALB DNS
-output "alb_dns_nam" {
+output "core-api-alb-test.dns_name" {
   value = aws_lb.core-api-alb-test.dns_name
 }
 
 # AWS ALB Listener ARN
-output "alb_listener_arn" {
+output "core-api-alb-listener-test" {
   value = aws_lb_listener.core-api-alb-listener-test.arn
 }
 
 # AWS Target Group ARN
-output "alb_target_group_arn" {
+output "core-api-tg-test.arn" {
   value = aws_lb_target_group.core-api-tg-test.arn
 }

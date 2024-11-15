@@ -1,26 +1,42 @@
-# AWS Service Assume Role
-# Inject variables : x
-variable "search_recommand_resource_acl_20221114" {
-  description = "AWS 서비스 Assume Role, 해당 Role을 통해 여러 AWS 제어 중"
-  default     = "Search_Recommand-ResourceACL_v1.0_20221114"
+# AWS Account
+# 파라미터 입력 필요 : o
+variable "aws_account" {
+  description = "AWS Account ID"
+  type        = string
+}
+
+# AWS ECS Task Role
+# 파라미터 입력 필요 : x
+variable "ecs_task_role" {
+  description = "AWS ECS Task Role"
+  type        = string
+  default     = "ecs_task_role"
+}
+
+# AWS ECS Task Execute Role
+# 파라미터 입력 필요 : x
+variable "ecs_task_exec_role" {
+  description = "AWS ECS Task Execution Role"
+  type        = string
+  default     = "ecs_task_exec_role"
 }
 
 # AWS Private Subnets
-# Inject variables : o
+# 파라미터 입력 필요 : o
 variable "vpc_private_subnet_ids" {
   description = "AWS private subnets 대역"
   type        = list(string)
 }
 
 # AWS Environments
-# Inject variables : o
+# 파라미터 입력 필요 : o
 variable "environment" {
   description = "AWS 환경 변수"
   type        = string
 }
 
 # AWS ECS Network Mode
-# Inject variables : x
+# 파라미터 입력 필요 : x
 variable "ecs_network_mode" {
   description = "AWS ECS Network Mode"
   type        = string
@@ -28,7 +44,7 @@ variable "ecs_network_mode" {
 }
 
 # AWS ECS Launch Type
-# Inject variables : x
+# 파라미터 입력 필요 : x
 variable "ecs_launch_type" {
   description = "AWS ECS Launch Type"
   type        = string
@@ -36,144 +52,185 @@ variable "ecs_launch_type" {
 }
 
 # AWS ECS Service Role
-# Inject variables : x
+# 파라미터 입력 필요 : x
 variable "ecs_service_role" {
   description = "AWS ECS Service Role"
   type        = string
   default     = "AWSServiceRoleForECS"
 }
 
-# AWS ECS API Name
-# Inject variables : x
-variable "core_api_name" {
-  description = "AWS ECS API Name List"
-  type        = list(string)
-  default = [
-    "search",
-    "meta-contents",
-    "user-contents",
-    "curation"
-  ]
-}
-
 # AWS ECS Task Definition Total Cpu
-# Inject variables : x
-variable "core_ecs_task_total_cpu" {
+# 파라미터 입력 필요 : o
+variable "ecs_task_total_cpu" {
   description = "AWS ECS Task Total CPU"
   type        = number
-  default     = 1024 # 1 vCPU
 }
 
 # AWS ECS Task Definition Total Mem
-# Inject variables : x
-variable "core_ecs_task_total_memory" {
+# 파라미터 입력 필요 : o
+variable "ecs_task_total_memory" {
   description = "AWS ECS Task Total Memory"
   type        = number
-  default     = 2048 # 2 GB
 }
 
 # AWS ALB ARN
-# Inject variables : o
-variable "core_alb_tg_arn" {
+# 파라미터 입력 필요 : o
+variable "alb_tg_arn" {
   description = "AWS ECS ALB TG ARN"
   type        = string
 }
 
+# AWS ECS Deployment Controller
+# 파라미터 입력 필요 : o
+variable "ecs_deployment_controller" {
+  description = "AWS ECS Deployment Controller"
+  type        = string
+  default     = "ECS" # ECS or CODE_DEPLOY
+}
+
 # AWS ALB Listener ARN
-# Inject variables : o
-variable "core_alb_listener_arn" {
+# 파라미터 입력 필요 : o
+variable "alb_listener_arn" {
   description = "AWS ECS ALB LISTENER ARN"
   type        = string
 }
 
 # AWS ECS Task Security Group
-# Inject variables : x
-variable "core_ecs_task_sg_id" {
+# 파라미터 입력 필요 : x
+variable "ecs_task_sg_id" {
   description = "AWS ECS Task별 보안그룹 id"
   type        = string
   default     = "search-search-api-SG"
 }
 
 # AWS ECS Cluster Name
-# Inject variables : x
-variable "core_ecs_cluster_name" {
+# 파라미터 입력 필요 : x
+variable "ecs_cluster_name" {
   description = "AWS ECS 클러스터명"
   type        = string
   default     = "search-ai-engine-cluster-stg"
 }
 
-# TODO:
-# 2024-11-13 20:05:30
-# ECS에서 filebeat Task Definition 생성 가능하도록 추가 필요
-# 1. ecs_task_container 시작 되는 부분 -> API / Filebeat 구분
-# 2. 아래 core_ecs_task 구문에 추가해주면 될 듯
+# AWS ECR Image version
+# latest 사용은 지양하는게 좋을 것으로 보임, 버전 관리도 못함
+# ecr image version의 경우 관리자가 입력하도록 하는게 좋을 듯
+variable "ecs_task_ecr_image_version" {
+  description = "AWS ECS ECR Image version"
+  type        = string
+  default     = "latest" # image version default
+}
 
 # AWS ECS Task
-# Inject variables : x
-variable "core_ecs_task" {
+# 파라미터 입력 필요 : x
+# TODO: defult는 따로 빼야함
+variable "ecs_task_option" {
   description = "AWS ECS task 목록"
   type = map(object({
-    ecs_task_ecr_api_image_arn          = string
-    ecs_task_definition_name            = string
-    ecs_task_container_cpu              = number
-    ecs_task_container_mem              = number
-    ecs_task_container_name             = string
-    ecs_task_container_port             = number
-    ecs_task_environment                = string
-    ecs_task_essential                  = bool
-    ecs_task_container_health_check_url = string
+    ecs_task_definition_name                     = string
+    ecs_task_api_image_arn                       = string
+    ecs_task_api_container_cpu                   = number
+    ecs_task_api_container_mem                   = number
+    ecs_task_api_container_name                  = string
+    ecs_task_api_container_port                  = number
+    ecs_task_api_environment                     = string
+    ecs_task_api_essential                       = bool
+    ecs_task_api_container_health_check_url      = string
+    ecs_task_api_container_health_check_interval = number
   }))
   default = {
     "core-search-api-server" = {
-      ecs_task_ecr_api_image_arn          = "746920558207.dkr.ecr.ap-northeast-2.amazonaws.com/search-search-api-server-stage",
-      ecs_task_definition_name            = "core-search-ai-engine-td-test",
-      ecs_task_container_cpu              = 256,
-      ecs_task_container_mem              = 512,
-      ecs_task_container_name             = "core-search-api-server",
-      ecs_task_container_port             = 10091,
-      ecs_task_environment                = "stage",
-      ecs_task_essential                  = true,
-      ecs_task_container_health_check_url = "curl --location --request GET 'http://127.0.0.1:10091/explore/health-check' --header 'x-request-svc: MS_9999' --header 'Content-Type: application/json' || exit 1"
+      ecs_task_definition_name                     = "core-search-ai-engine-td-test",
+      ecs_task_api_image_arn                       = "dkr.ecr.ap-northeast-2.amazonaws.com/search-search-api-server-stage",
+      ecs_task_api_container_cpu                   = 256,
+      ecs_task_api_container_mem                   = 512,
+      ecs_task_api_container_name                  = "core-search-api-server",
+      ecs_task_api_container_port                  = 10091,
+      ecs_task_api_environment                     = "stage",
+      ecs_task_api_essential                       = true,
+      ecs_task_api_container_health_check_url      = "curl --location --request GET 'http://127.0.0.1:10091/explore/health-check' --header 'x-request-svc: MS_9999' --header 'Content-Type: application/json' || exit 1",
+      ecs_task_api_container_health_check_interval = 30,
+      ecs_task_api_container_health_check_timeout  = 10,
+      ecs_task_api_container_health_check_retries  = 5,
+      ecs_task_filebeat_image_arn                  = "dkr.ecr.ap-northeast-2.amazonaws.com/search-filebeat-stage", // filebeat
+      ecs_task_filebat_container_cpu               = "256",
+      ecs_task_filebeat_container_mem              = "512",
+      ecs_task_filebeat_container_name             = "core-filebeat",
+      ecs_task_filebeat_container_environment      = "stage",
+      ecs_task_filebeat_essential                  = false,
+      ecs_task_api_container_health_check_url      = "ps aux | grep '[f]ilebeat' || exit 1",
+      ecs_task_api_container_health_check_interval = 30,
+      ecs_task_api_container_health_check_timeout  = 10,
+      ecs_task_api_container_health_check_retries  = 5
     },
     "core-meta-contents-api-server" = {
-      ecs_task_ecr_api_image_arn          = "746920558207.dkr.ecr.ap-northeast-2.amazonaws.com/search-meta-contents-api-server-stage",
-      ecs_task_definition_name            = "core-meta-ai-engine-td-test",
-      ecs_task_container_cpu              = 256,
-      ecs_task_container_mem              = 512,
-      ecs_task_container_name             = "core-meta-contents-api-server",
-      ecs_task_container_port             = 10092,
-      ecs_task_environment                = "stage",
-      ecs_task_essential                  = true,
-      ecs_task_container_health_check_url = "curl --location --request GET 'http://127.0.0.1:10092/meta-contents/health-check' --header 'x-request-svc: MS_9999' --header 'Content-Type: application/json' || exit 1"
+      ecs_task_definition_name                     = "core-meta-ai-engine-td-test",
+      ecs_task_api_image_arn                       = "dkr.ecr.ap-northeast-2.amazonaws.com/search-meta-contents-api-server-stage",
+      ecs_task_api_container_cpu                   = 256,
+      ecs_task_api_container_mem                   = 512,
+      ecs_task_api_container_name                  = "core-meta-contents-api-server",
+      ecs_task_api_container_port                  = 10092,
+      ecs_task_api_environment                     = "stage",
+      ecs_task_api_essential                       = true,
+      ecs_task_api_container_health_check_url      = "curl --location --request GET 'http://127.0.0.1:10092/meta-contents/health-check' --header 'x-request-svc: MS_9999' --header 'Content-Type: application/json' || exit 1",
+      ecs_task_filebeat_image_arn                  = "dkr.ecr.ap-northeast-2.amazonaws.com/search-filebeat-stage",
+      ecs_task_filebat_container_cpu               = "256",
+      ecs_task_filebeat_container_mem              = "512",
+      ecs_task_filebeat_container_name             = "core-filebeat",
+      ecs_task_filebeat_container_environment      = "stage",
+      ecs_task_filebeat_essential                  = false,
+      ecs_task_api_container_health_check_url      = "ps aux | grep '[f]ilebeat' || exit 1",
+      ecs_task_api_container_health_check_interval = 30,
+      ecs_task_api_container_health_check_timeout  = 10,
+      ecs_task_api_container_health_check_retries  = 5
     },
     "core-user-contents-api-server" = {
-      ecs_task_ecr_api_image_arn          = "746920558207.dkr.ecr.ap-northeast-2.amazonaws.com/search-user-contents-api-server-stage",
-      ecs_task_definition_name            = "core-user-ai-engine-td-test",
-      ecs_task_container_cpu              = 256,
-      ecs_task_container_mem              = 512,
-      ecs_task_container_name             = "core-user-contents-api-server",
-      ecs_task_container_port             = 10093,
-      ecs_task_environment                = "stage",
-      ecs_task_essential                  = true,
-      ecs_task_container_health_check_url = "curl --location --request GET 'http://127.0.0.1:10093/user-contents/health-check' --header 'x-request-svc: MS_9999' --header 'Content-Type: application/json' || exit 1"
+      ecs_task_definition_name                     = "core-user-ai-engine-td-test",
+      ecs_task_api_image_arn                       = "dkr.ecr.ap-northeast-2.amazonaws.com/search-user-contents-api-server-stage",
+      ecs_task_api_container_cpu                   = 256,
+      ecs_task_api_container_mem                   = 512,
+      ecs_task_api_container_name                  = "core-user-contents-api-server",
+      ecs_task_api_container_port                  = 10093,
+      ecs_task_api_environment                     = "stage",
+      ecs_task_api_essential                       = true,
+      ecs_task_api_container_health_check_url      = "curl --location --request GET 'http://127.0.0.1:10093/user-contents/health-check' --header 'x-request-svc: MS_9999' --header 'Content-Type: application/json' || exit 1",
+      ecs_task_filebeat_image_arn                  = "dkr.ecr.ap-northeast-2.amazonaws.com/search-filebeat-stage",
+      ecs_task_filebat_container_cpu               = "256",
+      ecs_task_filebeat_container_mem              = "512",
+      ecs_task_filebeat_container_name             = "core-filebeat",
+      ecs_task_filebeat_container_environment      = "stage",
+      ecs_task_filebeat_essential                  = false,
+      ecs_task_api_container_health_check_url      = "ps aux | grep '[f]ilebeat' || exit 1",
+      ecs_task_api_container_health_check_interval = 30,
+      ecs_task_api_container_health_check_timeout  = 10,
+      ecs_task_api_container_health_check_retries  = 5
     },
     "core-curation-api-server" = {
-      ecs_task_ecr_api_image_arn          = "746920558207.dkr.ecr.ap-northeast-2.amazonaws.com/search-curation-api-server-stage",
-      ecs_task_definition_name            = "core-curation-ai-engine-td-test",
-      ecs_task_container_cpu              = 256,
-      ecs_task_container_mem              = 512,
-      ecs_task_container_name             = "core-curation-api-server",
-      ecs_task_container_port             = 10094,
-      ecs_task_environment                = "stage",
-      ecs_task_essential                  = true,
-      ecs_task_container_health_check_url = "curl --location --request GET 'http://127.0.0.1:10094/curation/health-check' --header 'x-request-svc: MS_9999' --header 'Content-Type: application/json' || exit 1"
+      ecs_task_definition_name                     = "core-curation-ai-engine-td-test",
+      ecs_task_api_image_arn                       = "dkr.ecr.ap-northeast-2.amazonaws.com/search-curation-api-server-stage",
+      ecs_task_api_container_cpu                   = 256,
+      ecs_task_api_container_mem                   = 512,
+      ecs_task_api_container_name                  = "core-curation-api-server",
+      ecs_task_api_container_port                  = 10094,
+      ecs_task_api_environment                     = "stage",
+      ecs_task_api_essential                       = true,
+      ecs_task_api_container_health_check_url      = "curl --location --request GET 'http://127.0.0.1:10094/curation/health-check' --header 'x-request-svc: MS_9999' --header 'Content-Type: application/json' || exit 1",
+      ecs_task_filebeat_image_arn                  = "dkr.ecr.ap-northeast-2.amazonaws.com/search-filebeat-stage",
+      ecs_task_filebat_container_cpu               = "256",
+      ecs_task_filebeat_container_mem              = "512",
+      ecs_task_filebeat_container_name             = "core-filebeat",
+      ecs_task_filebeat_container_environment      = "stage",
+      ecs_task_filebeat_essential                  = false,
+      ecs_task_api_container_health_check_url      = "ps aux | grep '[f]ilebeat' || exit 1",
+      ecs_task_api_container_health_check_interval = 30,
+      ecs_task_api_container_health_check_timeout  = 10,
+      ecs_task_api_container_health_check_retries  = 5
     }
   }
 }
 
 # Core ECS Service
-# Inject variables : x
-variable "core_ecs_service" {
+# 파라미터 입력 필요 : x
+variable "ecs_service_option" {
   description = "AWS ECS service 목록"
   type = map(object({
     ecs_service_name               = string # ECS 서비스 도메인명

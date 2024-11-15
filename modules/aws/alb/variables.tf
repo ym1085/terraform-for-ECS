@@ -1,12 +1,12 @@
 # ALB Public Subnet 목록
-# Inject variables : o
+# 파라미터 입력 필요 : o
 variable "vpc_id" {
   type        = string
   description = "VPC ID"
 }
 
 # ALB 퍼블릭 서브넷 목록
-# Inject variables : x
+# 파라미터 입력 필요 : x
 variable "core_alb_public_subnets" {
   type        = list(string)
   description = "ALB 퍼블릭 서브넷 목록"
@@ -18,14 +18,14 @@ variable "core_alb_public_subnets" {
 }
 
 # ALB SG ID
-# Inject variables : o
+# 파라미터 입력 필요 : o
 variable "core_alb_sg_id" {
   type        = string
   description = "검색 ALB SG ID"
 }
 
 # META TG 목록
-# Inject variables : x
+# 파라미터 입력 필요 : x
 variable "core_alb_tg" {
   type = map(object({
     type     = string

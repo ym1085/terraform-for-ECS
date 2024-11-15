@@ -1,13 +1,13 @@
 [
     {
-          "name": "${ecs_task_container_name}-${ecs_task_environment}",
-          "image": "${ecs_task_ecr_api_image_arn}:${ecs_task_ecr_image_version}",
-          "cpu": ${ecs_task_container_cpu},
-          "memory": ${ecs_task_container_mem},
+          "name": "${ecs_task_api_container_name}-${ecs_task_api_environment}",
+          "image": "${aws_account}.${ecs_task_api_image_arn}:${ecs_task_ecr_image_version}",
+          "cpu": ${ecs_task_api_container_cpu},
+          "memory": ${ecs_task_api_container_mem},
           "portMappings": [
                {
-                    "hostPort": ${ecs_task_container_port}
-                    "containerPort": ${ecs_task_container_port},
+                    "hostPort": ${ecs_task_api_container_port}
+                    "containerPort": ${ecs_task_api_container_port},
                     "protocol": "tcp"
                }
           ],
@@ -15,7 +15,7 @@
                { "name": "TZ", "value" : "Asia/Seoul"},
                { "name": "SPRING_PROFILES_ACTIVE", "value" : "stage"}
           ],
-          "essential": ${ecs_task_essential},
+          "essential": ${ecs_task_api_essential},
           "mountPoints": [
                {
                     "sourceVolume": "core-shared-volume",
@@ -39,17 +39,17 @@
                "createby": "ymkim",
                "teamtag": "AG",
                "env": "${ecs_task_environment}",
-               "Name": "${ecs_task_container_name}-${ecs_task_environment}",
+               "Name": "${ecs_task_api_container_name}-${ecs_task_api_environment}",
                "servicetag": "search-w-d"
           },
           "healthCheck": {
                "command": [
                     "CMD-SHELL",
-                    "${ecs_task_container_health_check_url}"
+                    "${ecs_task_api_container_health_check_url}"
                ],
-               "interval": 30,
-               "timeout": 10,
-               "retries": 5
+               "interval": ${ecs_task_api_container_interval},
+               "timeout": ${ecs_task_api_container_timeout},
+               "retries": ${ecs_task_api_container_retries}
           },
           "systemControls": []
      }
