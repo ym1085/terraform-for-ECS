@@ -2,131 +2,185 @@
 # COMMON                       #
 ################################
 variable "aws_region" {
-  description = "AWS Region"
+  description = "AWS Default Region"
   type        = string
   default     = "ap-northeast-2"
 }
 
-# AWS Account
 variable "aws_account" {
   description = "AWS Account ID"
   type        = string
 }
 
-# AWS Environments
 variable "environment" {
-  description = "AWS 환경 변수"
+  description = "AWS Development Environment"
   type        = string
+  default     = "dev"
 }
 
 ################################
 # Modules - VPC                #
 ################################
-# AWS Private Subnets
+variable "vpc_id" {
+  description = "VPC ID"
+  type        = string
+}
+
 variable "vpc_private_subnet_ids" {
-  description = "AWS private subnets 대역"
+  description = "AWS VPC Private Subnet"
   type        = list(string)
+}
+
+################################
+# Modules - ALB                #
+################################
+variable "alb" {
+  description = "ALB"
+  type = map(object({
+    alb_name                             = string
+    alb_internal                         = bool
+    alb_load_balancer_type               = string
+    alb_public_subnets                   = list(string)
+    alb_private_subnets                  = list(string)
+    alb_sg_id                            = list(string)
+    alb_enable_deletion_protection       = bool
+    alb_enable_cross_zone_load_balancing = bool
+    alb_idle_timeout                     = number
+    tags                                 = map(string) # ALB 태그 지정
+  }))
+}
+
+variable "alb_listener" {
+  description = "ALB listener"
+  type = map(object({
+    port     = number
+    protocol = string
+    default_action = object({
+      type = string
+    })
+    tags = map(string)
+  }))
+}
+
+variable "alb_listener_rule" {
+  description = "ALB listener rule"
+  type = map(object({
+    type              = string
+    path              = list(string)
+    target_group_name = string
+    priority          = number
+  }))
+}
+
+variable "target_group" {
+  description = "Target Group"
+  type = map(object({
+    target_group_name        = string # Target Group 이름 지정(원하는 이름 지정)
+    target_group_port        = number # Target Group Port(80, 443..)
+    target_group_elb_type    = string # Target Group ELB 타입(ALB, NLB, ELB..)
+    target_group_target_type = string # Target Group 타겟 타입(IP, 인스턴스, ALB..)
+    environment              = string # Target Group 환경 변수(PROD, STAGE..)
+    health_check = object({           # Target Group 헬스 체크 관련 설정
+      enabled             = bool
+      healthy_threshold   = number
+      internal            = number
+      port                = number
+      protocol            = string
+      timeout             = number
+      unhealthy_threshold = number
+    })
+    tags = map(string) # Target Group 태그 지정
+  }))
 }
 
 ################################
 # Modules - ECS                #
 ################################
-# AWS ECS Task Role
 variable "ecs_task_role" {
   description = "AWS ECS Task Role"
   type        = string
 }
 
-# AWS ECS Task Execute Role
 variable "ecs_task_exec_role" {
   description = "AWS ECS Task Execution Role"
   type        = string
 }
 
-# AWS ECS Service Role
 variable "ecs_service_role" {
   description = "AWS ECS Service Role"
   type        = string
   default     = "AWSServiceRoleForECS"
 }
 
-# AWS ECS Network Mode
 variable "ecs_network_mode" {
   description = "AWS ECS Network Mode"
   type        = string
   default     = "awsvpc"
 }
 
-# AWS ECS Launch Type
 variable "ecs_launch_type" {
   description = "AWS ECS Launch Type"
   type        = string
   default     = "FARGATE"
 }
 
-# AWS ECS Task Definition Total Cpu
 variable "ecs_task_total_cpu" {
   description = "AWS ECS Task Total CPU"
   type        = number
+  default     = 256
 }
 
-# AWS ECS Task Definition Total Mem
 variable "ecs_task_total_memory" {
   description = "AWS ECS Task Total Memory"
   type        = number
+  default     = 512
 }
 
-# AWS ALB TG ARN
 variable "alb_tg_arn" {
   description = "AWS ECS ALB TG ARN"
   type        = string
 }
 
-# AWS ALB Listener ARN
 variable "alb_listener_arn" {
   description = "AWS ECS ALB LISTENER ARN"
   type        = string
 }
 
-# AWS ECS Task Definition OS
 variable "runtime_platform_oprating_system_family" {
   description = "AWS ECS Runtime Platform OS"
   type        = string
+  default     = "LINUX"
 }
 
-# AWS ECS Task Definition CPU Archi
 variable "runtime_platform_cpu_architecture" {
   description = "AWS ECS Runtime Platform CPU"
   type        = string
+  default     = "X86_64"
 }
 
-# AWS ECS Deployment Controller
+# CODE DEPLOY로 지정하려면 아래 타입 변경 필요
+# ECS | CODE_DEPLOY | EXTERNAL
 variable "ecs_deployment_controller" {
   description = "AWS ECS Deployment Controller"
   type        = string
+  default     = "ECS"
 }
 
-# AWS ECS Task Security Group
 variable "ecs_task_sg_id" {
   description = "AWS ECS Task SG"
   type        = string
 }
 
-# AWS ECS Cluster Name
 variable "ecs_cluster_name" {
   description = "AWS ECS Cluster Name"
   type        = string
 }
 
-# AWS ECR Image version
-# latest 사용은 지양하는게 좋을 것으로 보임, 버전 관리도 못함
-# ecr image version의 경우 관리자가 입력하도록 하는게 좋을 듯
 variable "ecs_task_ecr_image_version" {
-  description = "AWS ECS ECR Image version"
+  description = "AWS ECR Image Version"
   type        = string
 }
 
-# AWS ECS Task
 variable "ecs_task_definitions" {
   description = "Task Definitions with multiple containers"
   type = map(object({
@@ -159,7 +213,6 @@ variable "ecs_task_definitions" {
   }))
 }
 
-# AWS ECS Service
 variable "ecs_service" {
   description = "AWS ECS 서비스 목록"
   type = map(object({
@@ -168,6 +221,6 @@ variable "ecs_service" {
     ecs_service_container_name     = string      # ECS Container Name
     ecs_service_container_port     = number      # ALB Listen Container Port
     health_check_grace_period_sec  = number      # 헬스 체크 그레이스 기간
-    tags                           = map(string) # Optional : 추가 태그
+    additional_tags                = map(string) # Optional : 추가 태그
   }))
 }

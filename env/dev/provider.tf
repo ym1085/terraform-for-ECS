@@ -1,4 +1,3 @@
-# Terraform version
 terraform {
   required_version = ">= 1.9.5"
   required_providers {
@@ -11,9 +10,4 @@ terraform {
 
 provider "aws" {
   region = var.aws_region
-}
-
-variable "aws_region" {
-  description = "AWS Default Region"
-  default     = "ap-northeast-2"
 }
