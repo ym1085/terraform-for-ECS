@@ -35,18 +35,18 @@ variable "vpc_private_subnet_ids" {
 # Modules - ALB                #
 ################################
 variable "alb" {
-  description = "ALB"
+  description = "Application Load Balancer configuration"
   type = map(object({
-    alb_name                             = string
-    alb_internal                         = bool
-    alb_load_balancer_type               = string
-    alb_public_subnets                   = list(string)
-    alb_private_subnets                  = list(string)
-    alb_sg_id                            = list(string)
-    alb_enable_deletion_protection       = bool
-    alb_enable_cross_zone_load_balancing = bool
-    alb_idle_timeout                     = number
-    tags                                 = map(string) # ALB 태그 지정
+    alb_name                         = string
+    alb_internal                     = bool
+    alb_load_balancer_type           = string
+    alb_private_subnets              = list(string)
+    alb_public_subnets               = list(string)
+    alb_sg_id                        = list(string)
+    enable_deletion_protection       = bool
+    enable_cross_zone_load_balancing = bool
+    idle_timeout                     = number
+    tags                             = map(string)
   }))
 }
 
@@ -73,23 +73,24 @@ variable "alb_listener_rule" {
 }
 
 variable "target_group" {
-  description = "Target Group"
+  description = "Target group configuration"
   type = map(object({
-    target_group_name        = string # Target Group 이름 지정(원하는 이름 지정)
-    target_group_port        = number # Target Group Port(80, 443..)
-    target_group_elb_type    = string # Target Group ELB 타입(ALB, NLB, ELB..)
-    target_group_target_type = string # Target Group 타겟 타입(IP, 인스턴스, ALB..)
-    environment              = string # Target Group 환경 변수(PROD, STAGE..)
-    health_check = object({           # Target Group 헬스 체크 관련 설정
+    target_group_name        = string
+    target_group_port        = number
+    target_group_elb_type    = string
+    target_group_target_type = string
+    environment              = string
+    health_check = object({
       enabled             = bool
       healthy_threshold   = number
-      internal            = number
+      interval            = number
       port                = number
       protocol            = string
       timeout             = number
       unhealthy_threshold = number
+      internal            = bool
     })
-    tags = map(string) # Target Group 태그 지정
+    tags = map(string)
   }))
 }
 
@@ -184,11 +185,13 @@ variable "ecs_task_ecr_image_version" {
 variable "ecs_task_definitions" {
   description = "Task Definitions with multiple containers"
   type = map(object({
-    task_family       = string
-    cpu               = number
-    memory            = number
-    environment       = string
-    ephemeral_storage = number
+    task_family = string
+    cpu         = number
+    memory      = number
+    environment = string
+    ephemeral_storage = object({
+      size_in_gib = number
+    })
     containers = list(object({
       name                  = string
       image                 = string
@@ -221,6 +224,6 @@ variable "ecs_service" {
     ecs_service_container_name     = string      # ECS Container Name
     ecs_service_container_port     = number      # ALB Listen Container Port
     health_check_grace_period_sec  = number      # 헬스 체크 그레이스 기간
-    additional_tags                = map(string) # Optional : 추가 태그
+    tags                           = map(string) # Optional : 추가 태그
   }))
 }
