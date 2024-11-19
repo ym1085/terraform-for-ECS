@@ -1,9 +1,9 @@
+# ECS Service 이름
 output "ecs_service_name" {
-  description = "AWS Core ECS Service Name"
-  value       = aws_ecs_service.core_ecs_service_test.name
+  value = { for k, v in aws_ecs_service.ecs_service : k => v.ecs_service_name }
 }
 
-output "core_ecs_task_definition" {
-  description = "AWS Core ECS Task Definition Name"
-  value       = aws_ecs_task_definition.core_ecs_task_definition
+# ECS Task Definition 이름
+output "ecs_task_definition" {
+  value = { for k, v in aws_ecs_task_definition.ecs_task_definition : k => v.family }
 }

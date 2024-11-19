@@ -35,7 +35,7 @@ resource "aws_lb_listener" "alb_listener" {
 resource "aws_lb_listener_rule" "alb_listener_rule" {
   for_each = var.alb_listener_rule
 
-  listener_arn = aws_lb_listener.alb_listener.arn
+  listener_arn = aws_lb_listener.alb_listener[each.key].arn
   priority     = each.value.priority
 
   condition {
@@ -55,7 +55,7 @@ resource "aws_lb_target_group" "target_group" {
   for_each = var.target_group
 
   vpc_id      = var.vpc_id                                                    # VPC ID 지정(외부 모듈 변수 or ??)
-  name        = "${each.value.target_group_name}-${environment}"              # Target Group 이름 지정(원하는 이름 지정)
+  name        = "${each.value.target_group_name}-${each.value.environment}"   # Target Group 이름 지정(원하는 이름 지정)
   port        = each.value.target_group_port                                  # Target Group Port 지정
   protocol    = each.value.target_group_target_type == "ALB" ? "HTTP" : "TCP" # Target Group 타입이 ALB면 HTTP, 아니면 TCP(NLB)
   target_type = each.value.target_group_type                                  # Target Group 타입 지정(IP, 인스턴스, ALB..)

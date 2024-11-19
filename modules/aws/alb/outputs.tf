@@ -1,14 +1,14 @@
-# AWS ALB DNS
-output "core-api-alb-test.dns_name" {
-  value = aws_lb.core-api-alb-test.dns_name
+# ALB 도메인명 반환
+output "alb_dns_name" {
+  value = { for k, v in aws_lb.alb : k => v.dns_name }
 }
 
-# AWS ALB Listener ARN
-output "core-api-alb-listener-test" {
-  value = aws_lb_listener.core-api-alb-listener-test.arn
+# ALB Listener ARN 반환
+output "alb_listener_arn" {
+  value = { for k, v in aws_lb_listener.alb_listener : k => v.arn }
 }
 
-# AWS Target Group ARN
-output "core-api-tg-test.arn" {
-  value = aws_lb_target_group.core-api-tg-test.arn
+# Target Group ARN 반환
+output "alb_target_group_arn" {
+  value = { for k, v in aws_lb_target_group.target_group : k => v.arn }
 }

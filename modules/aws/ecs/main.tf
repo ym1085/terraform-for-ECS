@@ -7,10 +7,11 @@ data "aws_iam_role" "ecs_task_exec_role" {
 }
 
 data "template_file" "container_definitions" {
+  for_each = tomap(var.ecs_task_definitions) # for_each로 반복할 맵 정의
   template = file("${path.module}/task_definitions.tpl")
 
   vars = {
-    containers = var.ecs_task_definitions[each.key].containers
+    containers = each.value.containers
   }
 }
 
@@ -24,8 +25,8 @@ resource "aws_ecs_task_definition" "ecs_task_definition" {
   requires_compatibilities = [var.ecs_launch_type] # EC2, FARATE
 
   # ECS Role
-  task_role_arn      = data.aws_iam_role.ecs_task_role
-  execution_role_arn = data.aws_iam_role.ecs_task_exec_role
+  task_role_arn      = data.aws_iam_role.ecs_task_role.arn
+  execution_role_arn = data.aws_iam_role.ecs_task_exec_role.arn
 
   runtime_platform {
     operating_system_family = var.runtime_platform_oprating_system_family
@@ -44,10 +45,11 @@ resource "aws_ecs_task_definition" "ecs_task_definition" {
 
   # ECS 임시 휘발성 볼륨 지정
   ephemeral_storage {
-    size_in_gib = each.value.ephemeral_storage # 21Gib (최소 볼륨)
+    size_in_gib = each.value.ephemeral_storage.size_in_gib
   }
 
-  container_definitions = data.template_file
+  # ECS Task Definition 파일을 읽어서, 
+  container_definitions = data.template_file.container_definitions[each.key].rendered
 }
 
 resource "aws_ecs_service" "ecs_service" {
@@ -87,8 +89,4 @@ resource "aws_ecs_service" "ecs_service" {
   }
 
   tags = each.value.tags # 태그 설정
-
-  depends_on = [
-    var.alb_listener_arn
-  ]
 }

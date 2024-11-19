@@ -130,11 +130,13 @@ variable "ecs_task_ecr_image_version" {
 variable "ecs_task_definitions" {
   description = "Task Definitions with multiple containers"
   type = map(object({
-    task_family       = string
-    cpu               = number
-    memory            = number
-    environment       = string
-    ephemeral_storage = number
+    task_family = string
+    cpu         = number
+    memory      = number
+    environment = string
+    ephemeral_storage = object({
+      size_in_gib = number
+    })
     containers = list(object({
       name                  = string
       image                 = string
