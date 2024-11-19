@@ -25,8 +25,8 @@ resource "aws_ecs_task_definition" "ecs_task_definition" {
   requires_compatibilities = [var.ecs_launch_type] # EC2, FARATE
 
   # ECS Role
-  task_role_arn      = data.aws_iam_role.ecs_task_role
-  execution_role_arn = data.aws_iam_role.ecs_task_exec_role
+  task_role_arn      = data.aws_iam_role.ecs_task_role.arn
+  execution_role_arn = data.aws_iam_role.ecs_task_exec_role.arn
 
   runtime_platform {
     operating_system_family = var.runtime_platform_oprating_system_family
@@ -89,6 +89,4 @@ resource "aws_ecs_service" "ecs_service" {
   }
 
   tags = each.value.tags # 태그 설정
-
-  depends_on = [var.alb_listener_arn]
 }
