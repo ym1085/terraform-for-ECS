@@ -1,3 +1,8 @@
+# 디버깅
+locals {
+  alb_keys = keys(aws_lb.alb)
+}
+
 # Application Load Balancer
 resource "aws_lb" "alb" {
   for_each = var.alb
@@ -6,7 +11,7 @@ resource "aws_lb" "alb" {
   internal           = each.value.alb_internal           # ELB internal or external 여부
   load_balancer_type = each.value.alb_load_balancer_type # ELB 타입
   subnets            = each.value.alb_public_subnets     # ALB 서브넷
-  security_groups    = [each.value.alb_sg_id]            # ALB 보안 그룹
+  security_groups    = each.value.alb_sg_id              # ALB 보안 그룹
 
   enable_deletion_protection       = each.value.alb_enable_deletion_protection       # 삭제 방지 활성화 여부
   enable_cross_zone_load_balancing = each.value.alb_enable_cross_zone_load_balancing # Cross-Zone 트래픽 분배 활성화 여부
@@ -19,7 +24,7 @@ resource "aws_lb" "alb" {
 resource "aws_lb_listener" "alb_listener" {
   for_each = var.alb_listener
 
-  load_balancer_arn = aws_lb.alb[each.key].arn # 현재 key에 해당하는 ALB ARN 참조 -> TODO: 해석
+  load_balancer_arn = aws_lb.alb[each.value.load_balancer_arn].arn
   port              = each.value.port
   protocol          = each.value.protocol
 
@@ -28,8 +33,10 @@ resource "aws_lb_listener" "alb_listener" {
     target_group_arn = aws_lb_target_group.target_group[each.value.default_action.target_group_arn].arn
   }
 
-  tags = each.value.tags # 태그 지정
+  tags       = each.value.tags
+  depends_on = [aws_lb.alb]
 }
+
 
 # Application Load Balancer Target Group Rule
 resource "aws_lb_listener_rule" "alb_listener_rule" {
@@ -40,7 +47,7 @@ resource "aws_lb_listener_rule" "alb_listener_rule" {
 
   condition {
     path_pattern {
-      values = [each.value.path] # ALB Rule URL 경로 조건
+      values = each.value.path # ALB Rule URL 경로 조건
     }
   }
 
@@ -48,6 +55,11 @@ resource "aws_lb_listener_rule" "alb_listener_rule" {
     type             = each.value.type
     target_group_arn = aws_lb_target_group.target_group[each.value.target_group_name].arn # -> TODO: 해석
   }
+
+  depends_on = [
+    aws_lb.alb,
+    aws_lb_listener.alb_listener
+  ]
 }
 
 # Application Load Balancer Target Group
@@ -58,17 +70,17 @@ resource "aws_lb_target_group" "target_group" {
   name        = "${each.value.target_group_name}-${each.value.environment}"   # Target Group 이름 지정(원하는 이름 지정)
   port        = each.value.target_group_port                                  # Target Group Port 지정
   protocol    = each.value.target_group_target_type == "ALB" ? "HTTP" : "TCP" # Target Group 타입이 ALB면 HTTP, 아니면 TCP(NLB)
-  target_type = each.value.target_group_type                                  # Target Group 타입 지정(IP, 인스턴스, ALB..)
+  target_type = each.value.target_group_target_type                           # Target Group 타입 지정(IP, 인스턴스, ALB..)
 
   # Target Group health checking
   health_check {
-    enabled             = each.value.enabled                                                         # Health Check 옵션 활성화 여부
-    healthy_threshold   = each.value.health_check.healthy_threshold                                  # 타겟 정상 상태 간주 Health Check 횟수
-    interval            = each.value.health_check.interval                                           # Health Check 반복 횟수
-    port                = each.value.health_check.port                                               # Health Check를 수행할 타겟의 포트 번호.
-    protocol            = each.value.health_check.target_group_target_type == "ALB" ? "HTTP" : "TCP" # Health Check 요청 프로토콜
-    timeout             = each.value.health_check.timeout                                            # Health Check 타임아웃 지정
-    unhealthy_threshold = each.value.health_check.unhealthy_threshold                                # 타겟이 비정상(Unhealthy) 상태로 간주되기 위해 연속적으로 실패해야 하는 Health Check 횟수.
+    enabled             = each.value.health_check.enabled                               # Health Check 옵션 활성화 여부
+    healthy_threshold   = each.value.health_check.healthy_threshold                     # 타겟 정상 상태 간주 Health Check 횟수
+    interval            = each.value.health_check.interval                              # Health Check 반복 횟수
+    port                = each.value.health_check.port                                  # Health Check를 수행할 타겟의 포트 번호.
+    protocol            = each.value.target_group_target_type == "ALB" ? "HTTP" : "TCP" # Health Check 요청 프로토콜
+    timeout             = each.value.health_check.timeout                               # Health Check 타임아웃 지정
+    unhealthy_threshold = each.value.health_check.unhealthy_threshold                   # 타겟이 비정상(Unhealthy) 상태로 간주되기 위해 연속적으로 실패해야 하는 Health Check 횟수.
   }
 
   # Tag 지정

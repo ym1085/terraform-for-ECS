@@ -6,26 +6,27 @@ variable "vpc_id" {
 variable "alb" {
   description = "Application Load Balancer configuration"
   type = map(object({
-    alb_name                         = string
-    alb_internal                     = bool
-    alb_load_balancer_type           = string
-    alb_private_subnets              = list(string)
-    alb_public_subnets               = list(string)
-    alb_sg_id                        = list(string)
-    enable_deletion_protection       = bool
-    enable_cross_zone_load_balancing = bool
-    idle_timeout                     = number
-    tags                             = map(string)
+    alb_name                             = string
+    alb_internal                         = bool
+    alb_load_balancer_type               = string
+    alb_public_subnets                   = list(string)
+    alb_sg_id                            = list(string)
+    alb_enable_deletion_protection       = bool
+    alb_enable_cross_zone_load_balancing = bool
+    alb_idle_timeout                     = number
+    tags                                 = map(string)
   }))
 }
 
 variable "alb_listener" {
   description = "ALB listener"
   type = map(object({
-    port     = number
-    protocol = string
+    port              = number
+    protocol          = string
+    load_balancer_arn = string
     default_action = object({
-      type = string
+      type             = string
+      target_group_arn = string
     })
     tags = map(string)
   }))

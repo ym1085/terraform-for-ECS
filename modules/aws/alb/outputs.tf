@@ -1,14 +1,23 @@
-# ALB 도메인명 반환
-output "alb_dns_name" {
-  value = { for k, v in aws_lb.alb : k => v.dns_name }
+output "alb_arns" {
+  value = {
+    for key, alb in aws_lb.alb : key => alb.arn
+  }
 }
 
-# ALB Listener ARN 반환
-output "alb_listener_arn" {
-  value = { for k, v in aws_lb_listener.alb_listener : k => v.arn }
+output "alb_dns_names" {
+  value = {
+    for key, alb in aws_lb.alb : key => alb.dns_name
+  }
 }
 
-# Target Group ARN 반환
 output "alb_target_group_arn" {
-  value = { for k, v in aws_lb_target_group.target_group : k => v.arn }
+  value = {
+    for key, target_group in aws_lb_target_group.target_group : key => target_group.arn
+  }
+}
+
+output "alb_listener_arn" {
+  value = {
+    for key, listener in aws_lb_listener.alb_listener : key => listener.arn
+  }
 }

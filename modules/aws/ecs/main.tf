@@ -11,14 +11,14 @@ data "template_file" "container_definitions" {
   template = file("${path.module}/task_definitions.tpl")
 
   vars = {
-    containers = each.value.containers
+    containers = jsonencode(each.value.containers)
   }
 }
 
 resource "aws_ecs_task_definition" "ecs_task_definition" {
   for_each = var.ecs_task_definitions
 
-  family                   = each.value.ecs_task_definition_name
+  family                   = each.value.task_family
   cpu                      = var.ecs_task_total_cpu
   memory                   = var.ecs_task_total_memory
   network_mode             = var.ecs_network_mode
@@ -45,7 +45,7 @@ resource "aws_ecs_task_definition" "ecs_task_definition" {
 
   # ECS 임시 휘발성 볼륨 지정
   ephemeral_storage {
-    size_in_gib = each.value.ephemeral_storage.size_in_gib
+    size_in_gib = each.value.ephemeral_storage
   }
 
   # ECS Task Definition 파일을 읽어서, 
@@ -55,24 +55,24 @@ resource "aws_ecs_task_definition" "ecs_task_definition" {
 resource "aws_ecs_service" "ecs_service" {
   for_each = var.ecs_service
 
-  cluster                           = "${var.ecs_cluster_name}-${var.environment}"              # ECS 클러스터 이름
-  launch_type                       = var.ecs_launch_type                                       # ECS 런치 타입
-  iam_role                          = var.ecs_service_role                                      # IAM Role
-  name                              = each.value.ecs_service_name                               # ECS 서비스 이름
-  desired_count                     = each.value.ecs_service_task_desired_count                 # 원하는 태스크 개수
-  health_check_grace_period_seconds = each.value.health_check_grace_period_sec                  # 헬스 체크 그레이스 기간
-  task_definition                   = aws_ecs_task_definition.ecs_task_definition[each.key].arn # Task Definition ARN
+  cluster                           = "${var.ecs_cluster_name}-${var.environment}"                                     # ECS 클러스터 이름
+  launch_type                       = var.ecs_launch_type                                                              # ECS 런치 타입
+  iam_role                          = var.ecs_service_role                                                             # IAM Role
+  name                              = each.value.ecs_service_name                                                      # ECS 서비스 이름
+  desired_count                     = each.value.ecs_service_task_desired_count                                        # 원하는 태스크 개수
+  health_check_grace_period_seconds = each.value.health_check_grace_period_sec                                         # 헬스 체크 그레이스 기간
+  task_definition                   = aws_ecs_task_definition.ecs_task_definition[each.value.ecs_task_definitions].arn # Task Definition ARN
 
   # 네트워크 구성 (Private Subnet 사용)
   network_configuration {
-    subnets          = var.vpc_private_subnet_ids
+    subnets          = var.vpc_private_subnet_ids # FIXME: 나중에 private로 변경
     security_groups  = [var.ecs_task_sg_id]
     assign_public_ip = false
   }
 
   # ALB와 연동된 Load Balancer 설정
   load_balancer {
-    target_group_arn = var.alb_tg_arn
+    target_group_arn = lookup(var.alb_tg_arn, each.key, null)
     container_name   = each.value.ecs_service_container_name
     container_port   = each.value.ecs_service_container_port
   }
