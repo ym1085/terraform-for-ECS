@@ -2,9 +2,13 @@
 # COMMON                       #
 ################################
 variable "aws_region" {
-  description = "AWS Default Region"
+  description = "AWS Region"
   type        = string
   default     = "ap-northeast-2"
+  validation {
+    condition     = contains(["ap-northeast-2"], var.aws_region)
+    error_message = "지원되지 않는 AWS 리전입니다."
+  }
 }
 
 variable "aws_account" {
@@ -37,26 +41,27 @@ variable "vpc_private_subnet_ids" {
 variable "alb" {
   description = "Application Load Balancer configuration"
   type = map(object({
-    alb_name                         = string
-    alb_internal                     = bool
-    alb_load_balancer_type           = string
-    alb_private_subnets              = list(string)
-    alb_public_subnets               = list(string)
-    alb_sg_id                        = list(string)
-    enable_deletion_protection       = bool
-    enable_cross_zone_load_balancing = bool
-    idle_timeout                     = number
-    tags                             = map(string)
+    alb_name                             = string
+    alb_internal                         = bool
+    alb_load_balancer_type               = string
+    alb_public_subnets                   = list(string)
+    alb_sg_id                            = list(string)
+    alb_enable_deletion_protection       = bool
+    alb_enable_cross_zone_load_balancing = bool
+    alb_idle_timeout                     = number
+    tags                                 = map(string)
   }))
 }
 
 variable "alb_listener" {
   description = "ALB listener"
   type = map(object({
-    port     = number
-    protocol = string
+    port              = number
+    protocol          = string
+    load_balancer_arn = string
     default_action = object({
-      type = string
+      type             = string
+      target_group_arn = string
     })
     tags = map(string)
   }))
@@ -91,6 +96,21 @@ variable "target_group" {
       internal            = bool
     })
     tags = map(string)
+  }))
+}
+
+################################
+# Modules - ECR                #
+################################
+variable "ecr_repository" {
+  description = "ECR repository"
+  type = map(object({
+    ecr_repository_name        = string
+    ecr_repository_environment = string
+    ecr_image_tag_mutability   = string
+    ecr_scan_on_push           = bool
+    ecr_force_delete           = bool
+    tags                       = map(string)
   }))
 }
 
@@ -137,15 +157,15 @@ variable "ecs_task_total_memory" {
   default     = 512
 }
 
-variable "alb_tg_arn" {
-  description = "AWS ECS ALB TG ARN"
-  type        = string
-}
+# variable "alb_tg_arn" {
+#   description = "AWS ECS ALB TG ARN"
+#   type        = map(string)
+# }
 
-variable "alb_listener_arn" {
-  description = "AWS ECS ALB LISTENER ARN"
-  type        = string
-}
+# variable "alb_listener_arn" {
+#   description = "AWS ECS ALB LISTENER ARN"
+#   type        = map(string)
+# }
 
 variable "runtime_platform_oprating_system_family" {
   description = "AWS ECS Runtime Platform OS"
@@ -185,13 +205,11 @@ variable "ecs_task_ecr_image_version" {
 variable "ecs_task_definitions" {
   description = "Task Definitions with multiple containers"
   type = map(object({
-    task_family = string
-    cpu         = number
-    memory      = number
-    environment = string
-    ephemeral_storage = object({
-      size_in_gib = number
-    })
+    task_family       = string
+    cpu               = number
+    memory            = number
+    environment       = string
+    ephemeral_storage = number
     containers = list(object({
       name                  = string
       image                 = string
@@ -219,10 +237,11 @@ variable "ecs_task_definitions" {
 variable "ecs_service" {
   description = "AWS ECS 서비스 목록"
   type = map(object({
-    ecs_service_name               = string      # ECS 서비스 도메인명
-    ecs_service_task_desired_count = number      # ECS 서비스 Task 개수
-    ecs_service_container_name     = string      # ECS Container Name
-    ecs_service_container_port     = number      # ALB Listen Container Port
+    ecs_service_name               = string # ECS 서비스 도메인명
+    ecs_service_task_desired_count = number # ECS 서비스 Task 개수
+    ecs_service_container_name     = string # ECS Container Name
+    ecs_service_container_port     = number # ALB Listen Container Port
+    ecs_task_definitions           = string
     health_check_grace_period_sec  = number      # 헬스 체크 그레이스 기간
     tags                           = map(string) # Optional : 추가 태그
   }))

@@ -5,6 +5,10 @@ variable "aws_region" {
   description = "AWS Region"
   type        = string
   default     = "ap-northeast-2"
+  validation {
+    condition     = contains(["ap-northeast-2"], var.aws_region)
+    error_message = "지원되지 않는 AWS 리전입니다."
+  }
 }
 
 # AWS Account
@@ -76,16 +80,14 @@ variable "ecs_task_total_memory" {
   type        = number
 }
 
-# AWS ALB TG ARN
 variable "alb_tg_arn" {
   description = "AWS ECS ALB TG ARN"
-  type        = string
+  type        = map(string)
 }
 
-# AWS ALB Listener ARN
 variable "alb_listener_arn" {
   description = "AWS ECS ALB LISTENER ARN"
-  type        = string
+  type        = map(string)
 }
 
 # AWS ECS Task Definition OS
@@ -130,13 +132,11 @@ variable "ecs_task_ecr_image_version" {
 variable "ecs_task_definitions" {
   description = "Task Definitions with multiple containers"
   type = map(object({
-    task_family = string
-    cpu         = number
-    memory      = number
-    environment = string
-    ephemeral_storage = object({
-      size_in_gib = number
-    })
+    task_family       = string
+    cpu               = number
+    memory            = number
+    environment       = string
+    ephemeral_storage = number
     containers = list(object({
       name                  = string
       image                 = string
@@ -165,10 +165,11 @@ variable "ecs_task_definitions" {
 variable "ecs_service" {
   description = "AWS ECS 서비스 목록"
   type = map(object({
-    ecs_service_name               = string      # ECS 서비스 도메인명
-    ecs_service_task_desired_count = number      # ECS 서비스 Task 개수
-    ecs_service_container_name     = string      # ECS Container Name
-    ecs_service_container_port     = number      # ALB Listen Container Port
+    ecs_service_name               = string # ECS 서비스 도메인명
+    ecs_service_task_desired_count = number # ECS 서비스 Task 개수
+    ecs_service_container_name     = string # ECS Container Name
+    ecs_service_container_port     = number # ALB Listen Container Port
+    ecs_task_definitions           = string
     health_check_grace_period_sec  = number      # 헬스 체크 그레이스 기간
     tags                           = map(string) # Optional : 추가 태그
   }))

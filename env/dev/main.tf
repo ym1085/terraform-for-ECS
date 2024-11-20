@@ -1,8 +1,8 @@
 # AWS VPC External
 data "aws_vpc" "vpc" {
   filter {
-    name   = "tag:Name"
-    values = ["default-vpc"] # 이미 생성되어 있는 VPC 참조
+    name   = "tag:Name"      # 필터링 조건은 VPC명
+    values = ["default-vpc"] # 이미 생성되어 있는 VPC의 이름을 기반으로 VPC ID 조회
   }
 }
 
@@ -19,6 +19,10 @@ module "alb" {
   alb_listener_rule = var.alb_listener_rule # ALB Listener Rule
   target_group      = var.target_group      # ALB의 Target Group
 }
+
+# module "ecr" {
+#   source = "../../modules/aws/ecr"
+# }
 
 # AWS ECS Modules
 module "ecs" {
@@ -55,4 +59,25 @@ module "ecs" {
   ecs_service                = var.ecs_service
 
   depends_on = [module.alb]
+}
+
+output "debug_variables" {
+  value = {
+    alb_arns             = module.alb.alb_arns
+    alb_dns_names        = module.alb.alb_dns_names
+    alb_target_group_arn = module.alb.alb_target_group_arn
+    alb_listener_arn     = module.alb.alb_listener_arn
+  }
+}
+
+# 디버깅을 위한 output 추가
+output "debug_ecs_variables" {
+  value = {
+    # vpc_private_subnet_ids = var.vpc_private_subnet_ids
+    ecs_task_role    = var.ecs_task_role
+    ecs_cluster_name = var.ecs_cluster_name
+    alb_tg_arn       = module.alb.alb_target_group_arn
+    alb_listener_arn = module.alb.alb_listener_arn
+    # 필요한 다른 변수들도 추가 가능
+  }
 }
