@@ -114,18 +114,21 @@ variable "ecs_task_sg_id" {
   type        = string
 }
 
-# AWS ECS Cluster Name
-variable "ecs_cluster_name" {
-  description = "AWS ECS Cluster Name"
-  type        = string
-}
-
 # AWS ECR Image version
 # latest 사용은 지양하는게 좋을 것으로 보임, 버전 관리도 못함
 # ecr image version의 경우 관리자가 입력하도록 하는게 좋을 듯
 variable "ecs_task_ecr_image_version" {
   description = "AWS ECS ECR Image version"
   type        = string
+}
+
+variable "ecs_cluster" {
+  description = "ECS Cluster"
+  type = map(object({
+    cluster_name = string
+    environment  = string
+    tags         = map(string)
+  }))
 }
 
 # AWS ECS Task
@@ -161,16 +164,18 @@ variable "ecs_task_definitions" {
   }))
 }
 
-# AWS ECS Service
 variable "ecs_service" {
   description = "AWS ECS 서비스 목록"
   type = map(object({
-    ecs_service_name               = string # ECS 서비스 도메인명
-    ecs_service_task_desired_count = number # ECS 서비스 Task 개수
-    ecs_service_container_name     = string # ECS Container Name
-    ecs_service_container_port     = number # ALB Listen Container Port
-    ecs_task_definitions           = string
-    health_check_grace_period_sec  = number      # 헬스 체크 그레이스 기간
-    tags                           = map(string) # Optional : 추가 태그
+    cluster_name                  = string
+    service_name                  = string # ECS 서비스 도메인명
+    desired_count                 = number # ECS 서비스 Task 개수
+    container_name                = string # ECS Container Name
+    container_port                = number # ALB Listen Container Port
+    task_definitions              = string
+    environment                   = string
+    health_check_grace_period_sec = number      # 헬스 체크 그레이스 기간
+    assign_public_ip              = bool        # 퍼블릭 IP 지정 여부
+    tags                          = map(string) # Optional : 추가 태그
   }))
 }

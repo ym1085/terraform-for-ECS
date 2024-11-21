@@ -49,6 +49,7 @@ variable "alb" {
     alb_enable_deletion_protection       = bool
     alb_enable_cross_zone_load_balancing = bool
     alb_idle_timeout                     = number
+    environment                          = string
     tags                                 = map(string)
   }))
 }
@@ -105,12 +106,12 @@ variable "target_group" {
 variable "ecr_repository" {
   description = "ECR repository"
   type = map(object({
-    ecr_repository_name        = string
-    ecr_repository_environment = string
-    ecr_image_tag_mutability   = string
-    ecr_scan_on_push           = bool
-    ecr_force_delete           = bool
-    tags                       = map(string)
+    ecr_repository_name      = string
+    environment              = string
+    ecr_image_tag_mutability = string
+    ecr_scan_on_push         = bool
+    ecr_force_delete         = bool
+    tags                     = map(string)
   }))
 }
 
@@ -192,14 +193,18 @@ variable "ecs_task_sg_id" {
   type        = string
 }
 
-variable "ecs_cluster_name" {
-  description = "AWS ECS Cluster Name"
-  type        = string
-}
-
 variable "ecs_task_ecr_image_version" {
   description = "AWS ECR Image Version"
   type        = string
+}
+
+variable "ecs_cluster" {
+  description = "ECS Cluster"
+  type = map(object({
+    cluster_name = string
+    environment  = string
+    tags         = map(string)
+  }))
 }
 
 variable "ecs_task_definitions" {
@@ -237,12 +242,15 @@ variable "ecs_task_definitions" {
 variable "ecs_service" {
   description = "AWS ECS 서비스 목록"
   type = map(object({
-    ecs_service_name               = string # ECS 서비스 도메인명
-    ecs_service_task_desired_count = number # ECS 서비스 Task 개수
-    ecs_service_container_name     = string # ECS Container Name
-    ecs_service_container_port     = number # ALB Listen Container Port
-    ecs_task_definitions           = string
-    health_check_grace_period_sec  = number      # 헬스 체크 그레이스 기간
-    tags                           = map(string) # Optional : 추가 태그
+    cluster_name                  = string
+    service_name                  = string # ECS 서비스 도메인명
+    desired_count                 = number # ECS 서비스 Task 개수
+    container_name                = string # ECS Container Name
+    container_port                = number # ALB Listen Container Port
+    task_definitions              = string
+    environment                   = string
+    health_check_grace_period_sec = number      # 헬스 체크 그레이스 기간
+    assign_public_ip              = bool        # 퍼블릭 IP 지정 여부
+    tags                          = map(string) # Optional : 추가 태그
   }))
 }

@@ -14,6 +14,7 @@ variable "alb" {
     alb_enable_deletion_protection       = bool
     alb_enable_cross_zone_load_balancing = bool
     alb_idle_timeout                     = number
+    environment                          = string
     tags                                 = map(string)
   }))
 }
