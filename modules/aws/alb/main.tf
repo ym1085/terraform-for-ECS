@@ -1,23 +1,22 @@
-# 디버깅
-locals {
-  alb_keys = keys(aws_lb.alb)
-}
-
 # Application Load Balancer
 resource "aws_lb" "alb" {
   for_each = var.alb
 
-  name               = each.value.alb_name               # ELB 이름
-  internal           = each.value.alb_internal           # ELB internal or external 여부
-  load_balancer_type = each.value.alb_load_balancer_type # ELB 타입
-  subnets            = each.value.alb_public_subnets     # ALB 서브넷
-  security_groups    = each.value.alb_sg_id              # ALB 보안 그룹
+  name               = "${each.value.alb_name}-${each.value.environment}" # ELB 이름
+  internal           = each.value.alb_internal                            # ELB internal or external 여부
+  load_balancer_type = each.value.alb_load_balancer_type                  # ELB 타입
+  subnets            = each.value.alb_public_subnets                      # ALB 서브넷
+  security_groups    = each.value.alb_sg_id                               # ALB 보안 그룹
 
   enable_deletion_protection       = each.value.alb_enable_deletion_protection       # 삭제 방지 활성화 여부
   enable_cross_zone_load_balancing = each.value.alb_enable_cross_zone_load_balancing # Cross-Zone 트래픽 분배 활성화 여부
   idle_timeout                     = each.value.alb_idle_timeout                     # 타임아웃 유휴시간 지정
 
   tags = each.value.tags # 태그 지정
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 # Application Load Balancer Listener
@@ -35,6 +34,10 @@ resource "aws_lb_listener" "alb_listener" {
 
   tags       = each.value.tags
   depends_on = [aws_lb.alb]
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 
@@ -60,6 +63,10 @@ resource "aws_lb_listener_rule" "alb_listener_rule" {
     aws_lb.alb,
     aws_lb_listener.alb_listener
   ]
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 # Application Load Balancer Target Group
@@ -85,4 +92,8 @@ resource "aws_lb_target_group" "target_group" {
 
   # Tag 지정
   tags = each.value.tags
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }

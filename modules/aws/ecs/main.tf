@@ -15,10 +15,22 @@ data "template_file" "container_definitions" {
   }
 }
 
+resource "aws_ecs_cluster" "ecs_cluster" {
+  for_each = var.ecs_cluster
+
+  name = each.value.cluster_name
+
+  lifecycle {
+    prevent_destroy = true
+  }
+
+  tags = each.value.tags
+}
+
 resource "aws_ecs_task_definition" "ecs_task_definition" {
   for_each = var.ecs_task_definitions
 
-  family                   = each.value.task_family
+  family                   = "${each.value.task_family}-${each.value.environment}"
   cpu                      = var.ecs_task_total_cpu
   memory                   = var.ecs_task_total_memory
   network_mode             = var.ecs_network_mode
@@ -34,7 +46,8 @@ resource "aws_ecs_task_definition" "ecs_task_definition" {
   }
 
   lifecycle {
-    ignore_changes = [container_definitions]
+    ignore_changes  = [container_definitions]
+    prevent_destroy = true # 삭제 방지
   }
 
   # task_definitions.tpl 파일에 있는 mountPoints 이름을 volume으로 사용
@@ -48,33 +61,33 @@ resource "aws_ecs_task_definition" "ecs_task_definition" {
     size_in_gib = each.value.ephemeral_storage
   }
 
-  # ECS Task Definition 파일을 읽어서, 
+  # ECS Task Definition 파일을 읽어서
   container_definitions = data.template_file.container_definitions[each.key].rendered
 }
 
 resource "aws_ecs_service" "ecs_service" {
   for_each = var.ecs_service
 
-  cluster                           = "${var.ecs_cluster_name}-${var.environment}"                                     # ECS 클러스터 이름
-  launch_type                       = var.ecs_launch_type                                                              # ECS 런치 타입
-  iam_role                          = var.ecs_service_role                                                             # IAM Role
-  name                              = each.value.ecs_service_name                                                      # ECS 서비스 이름
-  desired_count                     = each.value.ecs_service_task_desired_count                                        # 원하는 태스크 개수
-  health_check_grace_period_seconds = each.value.health_check_grace_period_sec                                         # 헬스 체크 그레이스 기간
-  task_definition                   = aws_ecs_task_definition.ecs_task_definition[each.value.ecs_task_definitions].arn # Task Definition ARN
+  launch_type                       = var.ecs_launch_type                                                          # ECS 런치 타입
+  iam_role                          = var.ecs_service_role                                                         # IAM Role
+  cluster                           = "${each.value.cluster_name}-${each.value.environment}"                       # ECS 클러스터 이름
+  name                              = "${each.value.service_name}-${each.value.environment}"                       # ECS 서비스 이름
+  desired_count                     = each.value.desired_count                                                     # 원하는 태스크 개수
+  health_check_grace_period_seconds = each.value.health_check_grace_period_sec                                     # 헬스 체크 그레이스 기간
+  task_definition                   = aws_ecs_task_definition.ecs_task_definition[each.value.task_definitions].arn # Task Definition ARN
 
   # 네트워크 구성 (Private Subnet 사용)
   network_configuration {
-    subnets          = var.vpc_private_subnet_ids # FIXME: 나중에 private로 변경
+    subnets          = var.vpc_private_subnet_ids # FIXME: 나중에 private로 변경 + ecs_service 변수 안에 넣어야함
     security_groups  = [var.ecs_task_sg_id]
-    assign_public_ip = false
+    assign_public_ip = each.value.assign_public_ip
   }
 
   # ALB와 연동된 Load Balancer 설정
   load_balancer {
     target_group_arn = lookup(var.alb_tg_arn, each.key, null)
-    container_name   = each.value.ecs_service_container_name
-    container_port   = each.value.ecs_service_container_port
+    container_name   = each.value.container_name
+    container_port   = each.value.container_port
   }
 
   # 배포 회로 차단기 및 롤백
@@ -87,6 +100,16 @@ resource "aws_ecs_service" "ecs_service" {
   deployment_controller {
     type = var.ecs_deployment_controller
   }
+
+  lifecycle {
+    prevent_destroy = true
+  }
+
+  # ECS Service는 Cluster, TD가 생성된 이후에 생성 되어야 함
+  depends_on = [
+    aws_ecs_cluster.ecs_cluster,
+    aws_ecs_task_definition.ecs_task_definition
+  ]
 
   tags = each.value.tags # 태그 설정
 }
