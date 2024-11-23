@@ -1,4 +1,3 @@
 # AWS ECS CI/CD with Terraform
 
-AWS ECS(fargate)와 CI/CD 파이프라인(code series) 구성을 위해,  
-Terraform을 사용하여 인프라를 코드로 관리.
+Terraform을 활용해 AWS ECS와 CI/CD 파이프라인을 구축하기 위한 리포지토리 입니다.
