@@ -1,4 +1,4 @@
-# Application Load Balancer
+# ALB 생성
 resource "aws_lb" "alb" {
   for_each = var.alb
 
@@ -19,7 +19,7 @@ resource "aws_lb" "alb" {
   }
 }
 
-# Application Load Balancer Listener
+# ALB Listener 생성
 resource "aws_lb_listener" "alb_listener" {
   for_each = var.alb_listener
 
@@ -41,7 +41,7 @@ resource "aws_lb_listener" "alb_listener" {
 }
 
 
-# Application Load Balancer Target Group Rule
+# ALB Listener Rule 생성
 resource "aws_lb_listener_rule" "alb_listener_rule" {
   for_each = var.alb_listener_rule
 
@@ -69,7 +69,7 @@ resource "aws_lb_listener_rule" "alb_listener_rule" {
   }
 }
 
-# Application Load Balancer Target Group
+# ALB Target Group 생성
 resource "aws_lb_target_group" "target_group" {
   for_each = var.target_group
 
