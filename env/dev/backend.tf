@@ -1,3 +1,4 @@
+# Terraform 상태 관리 state 파일을 S3에 올려두고 상태 관리 수행
 # terraform {
 #   backend "s3" {
 #     bucket         = "search-terraform-state-bucket"      # s3 버킷명
