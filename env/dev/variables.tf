@@ -1,8 +1,16 @@
-################################
-# COMMON                       #
-################################
+####################
+# 프로젝트 기본 설정
+####################
+# 프로젝트 이름
+variable "project_name" {
+  description = "프로젝트 이름 설정"
+  type        = string
+  default     = "terraform-eks"
+}
+
+# AWS 가용영역
 variable "aws_region" {
-  description = "AWS Region"
+  description = "AWS 가용영역 설정"
   type        = string
   default     = "ap-northeast-2"
   validation {
@@ -11,35 +19,55 @@ variable "aws_region" {
   }
 }
 
+# AWS 계정 ID
 variable "aws_account" {
-  description = "AWS Account ID"
+  description = "AWS 계정 ID 설정"
   type        = string
 }
 
+# AWS 개발 환경
 variable "environment" {
-  description = "AWS Development Environment"
+  description = "AWS 개발 환경 설정"
   type        = string
-  default     = "dev"
+  default     = "stage"
 }
 
-################################
-# Modules - VPC                #
-################################
+####################
+# 네트워크 설정
+####################
+# VPC ID(이미 생성되어 있는 VPC ID를 data 통해 받아오거나, 아니면 생성된 VPC ID를 넣는다)
 variable "vpc_id" {
-  description = "VPC ID"
-  type        = string
+  description = "VPC ID 설정"
+  type = string
 }
 
-variable "vpc_private_subnet_ids" {
-  description = "AWS VPC Private Subnet"
+# VPC CIDR
+variable "vpc_cidr" {
+  description = "VPC CIDR 설정"
+  type        = string
+  default     = "172.22.0.0/16" # 2^16 => 65,536 / 가용영역(4개) => 16,384
+}
+
+# 퍼블릭 서브넷
+variable "public_subnets_cidr" {
+  description = "퍼블릭 서브넷 설정"
   type        = list(string)
 }
 
-################################
-# Modules - ALB                #
-################################
+# 프라이빗 서브넷
+variable "private_subnets_cidr" {
+  description = "프라이빗 서브넷 설정"
+  type        = list(string)
+}
+
+####################
+# 로드밸런서 설정
+####################
+
+# Application Load Balancer
+# ALB의 KEY 이름과, Target Group 변수의 KEY 이름을 일치시켜야 함
 variable "alb" {
-  description = "Application Load Balancer configuration"
+  description = "ALB 설정"
   type = map(object({
     alb_name                             = string
     alb_internal                         = bool
@@ -54,8 +82,9 @@ variable "alb" {
   }))
 }
 
+# ALB Listencer
 variable "alb_listener" {
-  description = "ALB listener"
+  description = "ALB Listener 설정"
   type = map(object({
     port              = number
     protocol          = string
@@ -68,8 +97,9 @@ variable "alb_listener" {
   }))
 }
 
+# ALB Listener Rule 생성
 variable "alb_listener_rule" {
-  description = "ALB listener rule"
+  description = "ALB Listener rule 설정"
   type = map(object({
     type              = string
     path              = list(string)
@@ -78,8 +108,10 @@ variable "alb_listener_rule" {
   }))
 }
 
+# ALB Target Group 생성
+# FIXME: 변수명 수정 필요 -> ALB야 아니면 NLB야? 정확히 명시
 variable "target_group" {
-  description = "Target group configuration"
+  description = "ALB Target Group 설정"
   type = map(object({
     target_group_name        = string
     target_group_port        = number
@@ -100,11 +132,11 @@ variable "target_group" {
   }))
 }
 
-################################
-# Modules - ECR                #
-################################
+####################
+# ECR 설정
+####################
 variable "ecr_repository" {
-  description = "ECR repository"
+  description = "ECR Private Image Repository 설정"
   type = map(object({
     ecr_repository_name      = string
     environment              = string
@@ -115,9 +147,74 @@ variable "ecr_repository" {
   }))
 }
 
-################################
-# Modules - ECS                #
-################################
+####################
+# ECS 클러스터 설정
+####################
+# ECS 클러스터 생성
+variable "ecs_cluster" {
+  description = "ECS Cluster 설정"
+  type = map(object({
+    cluster_name = string
+    environment  = string
+    tags         = map(string)
+  }))
+}
+
+# ECS 서비스 생성
+variable "ecs_service" {
+  description = "ECS 서비스 설정"
+  type = map(object({
+    cluster_name                  = string
+    service_name                  = string # ECS 서비스 도메인명
+    desired_count                 = number # ECS 서비스 Task 개수
+    container_name                = string # ECS Container Name
+    container_port                = number # ALB Listen Container Port
+    task_definitions              = string
+    environment                   = string
+    health_check_grace_period_sec = number      # 헬스 체크 그레이스 기간
+    assign_public_ip              = bool        # 퍼블릭 IP 지정 여부
+    tags                          = map(string) # Optional : 추가 태그
+  }))
+}
+
+# ECS Task Definitions 생성
+variable "ecs_task_definitions" {
+  description = "ECS Task Definition 설정"
+  type = map(object({
+    task_family       = string
+    cpu               = number
+    memory            = number
+    environment       = string
+    ephemeral_storage = number
+    containers = list(object({
+      name                  = string
+      image                 = string
+      version               = string
+      cpu                   = number
+      memory                = number
+      port                  = number
+      essential             = bool
+      environment_variables = map(string)
+      mount_points = list(object({
+        sourceVolume  = string
+        containerPath = string
+        readOnly      = bool
+      }))
+      health_check = object({
+        command  = string
+        interval = number
+        timeout  = number
+        retries  = number
+      })
+    }))
+  }))
+}
+
+#####
+# FIXME: 아래 변수는 terraform.tfvars 외부 파라미터를 통해 받아서 사용하는 변수가 아님
+# 추후 아래 변수 사용 목적/용도 확인 후 외부 파라미터로 받든, 다른 방법을 통해 진행
+#####
+
 variable "ecs_task_role" {
   description = "AWS ECS Task Role"
   type        = string
@@ -158,16 +255,6 @@ variable "ecs_task_total_memory" {
   default     = 512
 }
 
-# variable "alb_tg_arn" {
-#   description = "AWS ECS ALB TG ARN"
-#   type        = map(string)
-# }
-
-# variable "alb_listener_arn" {
-#   description = "AWS ECS ALB LISTENER ARN"
-#   type        = map(string)
-# }
-
 variable "runtime_platform_oprating_system_family" {
   description = "AWS ECS Runtime Platform OS"
   type        = string
@@ -196,61 +283,4 @@ variable "ecs_task_sg_id" {
 variable "ecs_task_ecr_image_version" {
   description = "AWS ECR Image Version"
   type        = string
-}
-
-variable "ecs_cluster" {
-  description = "ECS Cluster"
-  type = map(object({
-    cluster_name = string
-    environment  = string
-    tags         = map(string)
-  }))
-}
-
-variable "ecs_task_definitions" {
-  description = "Task Definitions with multiple containers"
-  type = map(object({
-    task_family       = string
-    cpu               = number
-    memory            = number
-    environment       = string
-    ephemeral_storage = number
-    containers = list(object({
-      name                  = string
-      image                 = string
-      version               = string
-      cpu                   = number
-      memory                = number
-      port                  = number
-      essential             = bool
-      environment_variables = map(string)
-      mount_points = list(object({
-        sourceVolume  = string
-        containerPath = string
-        readOnly      = bool
-      }))
-      health_check = object({
-        command  = string
-        interval = number
-        timeout  = number
-        retries  = number
-      })
-    }))
-  }))
-}
-
-variable "ecs_service" {
-  description = "AWS ECS 서비스 목록"
-  type = map(object({
-    cluster_name                  = string
-    service_name                  = string # ECS 서비스 도메인명
-    desired_count                 = number # ECS 서비스 Task 개수
-    container_name                = string # ECS Container Name
-    container_port                = number # ALB Listen Container Port
-    task_definitions              = string
-    environment                   = string
-    health_check_grace_period_sec = number      # 헬스 체크 그레이스 기간
-    assign_public_ip              = bool        # 퍼블릭 IP 지정 여부
-    tags                          = map(string) # Optional : 추가 태그
-  }))
 }

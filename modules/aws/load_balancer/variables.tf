@@ -1,8 +1,18 @@
+####################
+# 네트워크 설정
+####################
+# VPC ID(이미 생성되어 있는 VPC ID를 data 통해 받아오거나, 아니면 생성된 VPC ID를 넣는다)
 variable "vpc_id" {
-  description = "VPC ID"
+  description = "VPC ID 설정"
   type        = string
 }
 
+####################
+# 로드밸런서 설정
+####################
+
+# Application Load Balancer
+# ALB의 KEY 이름과, Target Group 변수의 KEY 이름을 일치시켜야 함
 variable "alb" {
   description = "Application Load Balancer configuration"
   type = map(object({
@@ -19,6 +29,7 @@ variable "alb" {
   }))
 }
 
+# ALB Listencer
 variable "alb_listener" {
   description = "ALB listener"
   type = map(object({
@@ -33,6 +44,7 @@ variable "alb_listener" {
   }))
 }
 
+# ALB Listener Rule 생성
 variable "alb_listener_rule" {
   description = "ALB listener rule"
   type = map(object({
@@ -43,6 +55,8 @@ variable "alb_listener_rule" {
   }))
 }
 
+# ALB Target Group 생성
+# FIXME: 변수명 수정 필요 -> ALB야 아니면 NLB야? 정확히 명시
 variable "target_group" {
   description = "Target group configuration"
   type = map(object({
