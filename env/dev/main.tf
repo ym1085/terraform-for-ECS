@@ -8,7 +8,7 @@ data "aws_vpc" "vpc" {
 
 # AWS ALB Modules
 module "alb" {
-  source = "../../modules/aws/alb"
+  source = "../../modules/aws/load_balancer"
 
   # vpc
   vpc_id = data.aws_vpc.vpc.id # ALB 대상 ID
@@ -22,7 +22,7 @@ module "alb" {
 
 # AWS ECS Modules
 module "ecs" {
-  source = "../../modules/aws/ecs"
+  source = "../../modules/aws/compute/ecs"
 
   # common
   aws_region  = var.aws_region
@@ -30,7 +30,7 @@ module "ecs" {
   environment = var.environment
 
   # vpc
-  vpc_private_subnet_ids = var.vpc_private_subnet_ids
+  vpc_private_subnet_ids = var.vpc_private_subnet_ids # FIXME: 변수 수정
 
   # ecs
   ecs_task_role         = var.ecs_task_role

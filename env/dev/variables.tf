@@ -29,12 +29,18 @@ variable "aws_account" {
 variable "environment" {
   description = "AWS 개발 환경 설정"
   type        = string
-  default     = "dev"
+  default     = "stage"
 }
 
 ####################
 # 네트워크 설정
 ####################
+# VPC ID(이미 생성되어 있는 VPC ID를 data 통해 받아오거나, 아니면 생성된 VPC ID를 넣는다)
+variable "vpc_id" {
+  description = "VPC ID 설정"
+  type = string
+}
+
 # VPC CIDR
 variable "vpc_cidr" {
   description = "VPC CIDR 설정"

@@ -1,8 +1,9 @@
-################################
-# COMMON                       #
-################################
+####################
+# 프로젝트 기본 설정
+####################
+# AWS 가용영역
 variable "aws_region" {
-  description = "AWS Region"
+  description = "AWS 가용영역 설정"
   type        = string
   default     = "ap-northeast-2"
   validation {
@@ -11,21 +12,41 @@ variable "aws_region" {
   }
 }
 
-# AWS Account
+# AWS 계정 ID
 variable "aws_account" {
-  description = "AWS Account ID"
+  description = "AWS 계정 ID 설정"
   type        = string
 }
 
-# AWS Environments
+# AWS 개발 환경
 variable "environment" {
-  description = "AWS 환경 변수"
+  description = "AWS 개발 환경 설정"
   type        = string
+  default     = "stage"
 }
 
-################################
-# Modules - VPC                #
-################################
+####################
+# 네트워크 설정
+####################
+# VPC CIDR
+variable "vpc_cidr" {
+  description = "VPC CIDR 설정"
+  type        = string
+  default     = "172.22.0.0/16" # 2^16 => 65,536 / 가용영역(4개) => 16,384
+}
+
+# 퍼블릭 서브넷
+variable "public_subnets_cidr" {
+  description = "퍼블릭 서브넷 설정"
+  type        = list(string)
+}
+
+# 프라이빗 서브넷
+variable "private_subnets_cidr" {
+  description = "프라이빗 서브넷 설정"
+  type        = list(string)
+}
+
 # AWS Private Subnets
 variable "vpc_private_subnet_ids" {
   description = "AWS private subnets 대역"

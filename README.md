@@ -4,7 +4,7 @@ Terraform을 활용해 AWS ECS와 CI/CD 파이프라인을 구축하기 위한 �
 
 ```shell
 # Terraform AWS ECS 프로젝트 폴더 구조
-TERAFORM-AWS-ECS-CICD
+terraform-for-ECS
 ├── env/
 │   ├── dev/
 │   │   ├── .terraform.lock.hcl
@@ -14,36 +14,40 @@ TERAFORM-AWS-ECS-CICD
 │   │   ├── terraform.tfvars
 │   │   └── variables.tf
 │   ├── prod/
+│
 ├── modules/
-│   ├── alb/
-│   │   ├── main.tf
-│   │   ├── outputs.tf
-│   │   └── variables.tf
-│   ├── ecr/
-│   │   ├── main.tf
-│   │   ├── outputs.tf
-│   │   └── variables.tf
-│   ├── ecs/
-│   │   ├── main.tf
-│   │   ├── outputs.tf
-│   │   ├── task_definitions.tpl
-│   │   └── variables.tf
-│   ├── nlb/
-│   │   ├── main.tf
-│   │   ├── outputs.tf
-│   │   └── variables.tf
-│   ├── security_groups/
-│   │   ├── main.tf
-│   │   ├── outputs.tf
-│   │   └── variables.tf
-│   ├── subnets/
-│   │   ├── main.tf
-│   │   ├── outputs.tf
-│   │   └── variables.tf
-│   └── vpc/
-│       ├── main.tf
-│       ├── outputs.tf
-│       └── variables.tf
+│   ├── aws/
+│   │   ├── compute/
+│   │   │   ├── ecs/
+│   │   │   │   ├── main.tf
+│   │   │   │   ├── outputs.tf
+│   │   │   │   ├── task_definitions.tpl
+│   │   │   │   └── variables.tf
+│   │   │   ├── eks/
+│   │   │   │   ├── main.tf
+│   │   │   │   ├── outputs.tf
+│   │   │   │   └── variables.tf
+│   │   ├── ecr/
+│   │   │   ├── main.tf
+│   │   │   ├── outputs.tf
+│   │   │   └── variables.tf
+│   │   ├── load_balancer/
+│   │   │   ├── main.tf
+│   │   │   ├── outputs.tf
+│   │   │   └── variables.tf
+│   │   ├── network/
+│   │   │   ├── main.tf
+│   │   │   ├── outputs.tf
+│   │   │   └── variables.tf
+│   │   ├── security/
+│   │   │   ├── main.tf
+│   │   │   ├── outputs.tf
+│   │   │   └── variables.tf
+│   │   ├── storage/
+│   │   │   ├── main.tf
+│   │   │   ├── outputs.tf
+│   │   │   └── variables.tf
+│
 ├── .gitignore
 └── README.md
 ```
