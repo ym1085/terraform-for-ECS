@@ -78,7 +78,7 @@ resource "aws_ecs_service" "ecs_service" {
 
   # 네트워크 구성 (Private Subnet 사용)
   network_configuration {
-    subnets          = var.vpc_private_subnet_ids # FIXME: 나중에 private로 변경 + ecs_service 변수 안에 넣어야함
+    subnets          = var.private_subnet_ids # subnet-xxxx, subnet-xxxx, subnet-xxxx
     security_groups  = [var.ecs_task_sg_id]
     assign_public_ip = each.value.assign_public_ip
   }

@@ -6,22 +6,22 @@ data "aws_vpc" "vpc" {
   }
 }
 
-# AWS ALB Modules
-module "alb" {
+module "network" {
+  source = "../../modules/aws/network"
+}
+
+module "load_balancer" {
   source = "../../modules/aws/load_balancer"
 
-  # vpc
-  vpc_id = data.aws_vpc.vpc.id # ALB 대상 ID
+  vpc_id = data.aws_vpc.vpc.id
 
-  # alb & tg
   alb               = var.alb               # 생성을 원하는 ALB 관련 정보
   alb_listener      = var.alb_listener      # 위에서 생성한 ALB Listener 관련 정보
   alb_listener_rule = var.alb_listener_rule # ALB Listener Rule
   target_group      = var.target_group      # ALB의 Target Group
 }
 
-# AWS ECS Modules
-module "ecs" {
+module "compute" {
   source = "../../modules/aws/compute/ecs"
 
   # common
@@ -30,7 +30,10 @@ module "ecs" {
   environment = var.environment
 
   # vpc
-  vpc_private_subnet_ids = var.vpc_private_subnet_ids # FIXME: 변수 수정
+  public_subnet_ids    = var.public_subnet_ids
+  private_subnet_ids   = var.private_subnet_ids
+  public_subnets_cidr  = var.public_subnets_cidr
+  private_subnets_cidr = var.private_subnets_cidr
 
   # ecs
   ecs_task_role         = var.ecs_task_role
@@ -41,8 +44,8 @@ module "ecs" {
   ecs_task_total_cpu    = var.ecs_task_total_cpu
   ecs_task_total_memory = var.ecs_task_total_memory
 
-  alb_tg_arn       = module.alb.alb_target_group_arn
-  alb_listener_arn = module.alb.alb_listener_arn
+  alb_tg_arn       = module.load_balancer.alb_target_group_arn
+  alb_listener_arn = module.load_balancer.alb_listener_arn
 
   runtime_platform_oprating_system_family = var.runtime_platform_oprating_system_family
   runtime_platform_cpu_architecture       = var.runtime_platform_cpu_architecture
@@ -54,5 +57,5 @@ module "ecs" {
   ecs_task_definitions       = var.ecs_task_definitions
   ecs_service                = var.ecs_service
 
-  depends_on = [module.alb]
+  depends_on = [module.load_balancer]
 }

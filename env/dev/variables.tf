@@ -38,7 +38,7 @@ variable "environment" {
 # VPC ID(이미 생성되어 있는 VPC ID를 data 통해 받아오거나, 아니면 생성된 VPC ID를 넣는다)
 variable "vpc_id" {
   description = "VPC ID 설정"
-  type = string
+  type        = string
 }
 
 # VPC CIDR
@@ -57,6 +57,18 @@ variable "public_subnets_cidr" {
 # 프라이빗 서브넷
 variable "private_subnets_cidr" {
   description = "프라이빗 서브넷 설정"
+  type        = list(string)
+}
+
+# 퍼블릭 서브넷 ID
+variable "public_subnet_ids" {
+  description = "퍼블릭 서브넷 대역 ID([subnet-xxxxxxxx, subnet-xxxxxxxx])"
+  type        = list(string)
+}
+
+# 프라이빗 서브넷 ID
+variable "private_subnet_ids" {
+  description = "프라이빗 서브넷 대역 ID([subnet-xxxxxxxx, subnet-xxxxxxxx])"
   type        = list(string)
 }
 
