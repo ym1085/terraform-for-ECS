@@ -1,10 +1,10 @@
 # 기본 VPC가 존재하는 경우, data 구문을 통해 VPC 참조
-data "aws_vpc" "vpc" {
-  filter {
-    name   = "tag:Name"      # 필터링 조건은 VPC명
-    values = ["default-vpc"] # 이미 생성되어 있는 VPC의 이름을 기반으로 VPC ID 조회
-  }
-}
+# data "aws_vpc" "vpc" {
+#   filter {
+#     name   = "tag:Name"      # 필터링 조건은 VPC명
+#     values = ["default-vpc"] # 이미 생성되어 있는 VPC의 이름을 기반으로 VPC ID 조회
+#   }
+# }
 
 module "network" {
   source = "../../modules/aws/network"
@@ -24,18 +24,18 @@ module "load_balancer" {
 module "compute" {
   source = "../../modules/aws/compute/ecs"
 
-  # common
-  aws_region  = var.aws_region
-  aws_account = var.aws_account
-  environment = var.environment
+  # 프로젝트 기본 설정
+  aws_region  = var.aws_region  # AWS 리전 정보
+  aws_account = var.aws_account # AWS account 정보
+  environment = var.environment # AWS 개발 환경
 
-  # vpc
+  # 네트워크 설정
   public_subnet_ids    = var.public_subnet_ids
   private_subnet_ids   = var.private_subnet_ids
   public_subnets_cidr  = var.public_subnets_cidr
   private_subnets_cidr = var.private_subnets_cidr
 
-  # ecs
+  # ECS 관련 설정
   ecs_task_role         = var.ecs_task_role
   ecs_task_exec_role    = var.ecs_task_exec_role
   ecs_service_role      = var.ecs_service_role
