@@ -9,18 +9,24 @@
 variable "project_name" {
   description = "프로젝트 이름 설정"
   type        = string
-  default     = "terraform-eks"
+  default     = "terraform-ecs"
 }
 
-# AWS 가용영역
+# AWS 리전
 variable "aws_region" {
-  description = "AWS 가용영역 설정"
+  description = "AWS 리전 설정"
   type        = string
   default     = "ap-northeast-2"
   validation {
     condition     = contains(["ap-northeast-2"], var.aws_region)
     error_message = "지원되지 않는 AWS 리전입니다."
   }
+}
+
+# AWS 가용영역
+variable "availability_zones" {
+  description = "가용 영역 설정"
+  type        = list(string)
 }
 
 # AWS 계정 ID
@@ -74,6 +80,19 @@ variable "public_subnet_ids" {
 variable "private_subnet_ids" {
   description = "프라이빗 서브넷 대역 ID([subnet-xxxxxxxx, subnet-xxxxxxxx])"
   type        = list(string)
+}
+
+# DNS Hostname 사용 옵션, 기본 false(VPC 내 리소스가 AWS DNS 주소 사용 가능)
+variable "enable_dns_support" {
+  description = "AWS DNS 사용 가능 여부 지정"
+  type        = bool
+}
+
+# DNS hostname을 만들건지 안 만들건지 지정하는 옵션
+# 결국 enable_dns_support, enable_dns_hostnames 옵션 2개다 켜야 DNS 통신 가능할 듯
+variable "enable_dns_hostnames" {
+  description = "DNS hostname 사용 가능 여부 지정"
+  type        = bool
 }
 
 ####################
@@ -299,4 +318,12 @@ variable "ecs_task_sg_id" {
 variable "ecs_task_ecr_image_version" {
   description = "AWS ECR Image Version"
   type        = string
+}
+
+####################
+# 공통 태그 설정
+####################
+variable "tags" {
+  description = "공통 태그 설정"
+  type        = map(string)
 }

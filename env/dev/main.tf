@@ -8,12 +8,20 @@
 
 module "network" {
   source = "../../modules/aws/network"
+
+  vpc_cidr             = var.vpc_cidr             # IPV4 CIDR Block(172.22.0.0/16)
+  enable_dns_support   = var.enable_dns_support   # DNS Hostname 사용 옵션, 기본 false(VPC 내 리소스가 AWS DNS 주소 사용 가능)
+  enable_dns_hostnames = var.enable_dns_hostnames # DNS Hostname 사용 옵션, 기본 true(VPC 내 DNS 호스트 이름 사용)
+  public_subnets_cidr  = var.public_subnets_cidr  # 퍼블릭 서브넷 목록(172.x.x.x/24, 172.x.x.x/24)
+  private_subnets_cidr = var.private_subnets_cidr # 프라이빗 서브넷 목록(172.x.x.x/24, 172.x.x.x/24)
+  availability_zones   = var.availability_zones   # 가용영역
+  tags                 = var.tags                 # 공통 태그
 }
 
 module "load_balancer" {
   source = "../../modules/aws/load_balancer"
 
-  vpc_id = data.aws_vpc.vpc.id
+  vpc_id = module.network.vpc_id
 
   alb               = var.alb               # 생성을 원하는 ALB 관련 정보
   alb_listener      = var.alb_listener      # 위에서 생성한 ALB Listener 관련 정보
@@ -25,9 +33,9 @@ module "compute" {
   source = "../../modules/aws/compute/ecs"
 
   # 프로젝트 기본 설정
-  aws_region  = var.aws_region  # AWS 리전 정보
-  aws_account = var.aws_account # AWS account 정보
-  environment = var.environment # AWS 개발 환경
+  aws_region  = var.aws_region
+  aws_account = var.aws_account
+  environment = var.environment
 
   # 네트워크 설정
   public_subnet_ids    = var.public_subnet_ids
