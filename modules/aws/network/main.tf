@@ -1,8 +1,3 @@
-locals {
-  project_name = var.project_name               # 프로젝트 이름
-  az_count     = length(var.availability_zones) # 가용영역 개수
-}
-
 # VPC 생성
 resource "aws_vpc" "main" {
   cidr_block           = var.vpc_cidr             # IPv4 CIDR Block(172.22.0.0/16)
@@ -10,7 +5,7 @@ resource "aws_vpc" "main" {
   enable_dns_support   = var.enable_dns_support   # DNS 사용 옵션, 기본 false(VPC 내 리소스가 AWS DNS 주소 사용 가능)
 
   tags = merge(var.tags, {
-    Name = "${locals.project_name}-vpc"
+    Name = "${local.project_name}-vpc"
   })
 }
 
@@ -25,7 +20,7 @@ resource "aws_subnet" "public_subnet" {
   map_public_ip_on_launch = true # 서브넷 내의 인스턴스의 퍼블릭 IP를 자동 할당 여부 지정
 
   tags = merge(var.tags, {
-    Name = "${format("%s-sub-pub-%02d", locals.project_name, count.index + 1)}"
+    Name = "${format("%s-sub-pub-%02d", local.project_name, count.index + 1)}"
   })
 }
 
@@ -53,5 +48,76 @@ resource "aws_internet_gateway" "igw" {
   })
 }
 
-# NAT 게이트웨이 EIP 생성
+# NAT 게이트웨이 EIP 생성 -> public subnet 01 대역에 위치
+resource "aws_eip" "ngw_eip" {
+  vpc = true # VPC에서 사용
+
+  # IGW 생성 후 EIP가 생성될 수 있게 의존성 설정
+  depends_on = [
+    aws_internet_gateway.igw
+  ]
+}
+
 # NAT 게이트웨이 생성
+resource "aws_nat_gateway" "ngw" {
+  allocation_id = aws_eip.ngw_eip.id             # NAT가 사용할 EIP 지정
+  subnet_id     = aws_subnet.public_subnet[0].id # NAT가 배치될 서브넷 지정
+
+  tags = merge(var.tags, {
+    Name = "${local.project_name}-ngw"
+  })
+}
+
+# 퍼블릭 라우팅 테이블 생성 -> 2개의 zone(a, b)에 각각 생성
+resource "aws_route_table" "public_route_table" {
+  count = local.az_count
+
+  vpc_id = aws_vpc.main.id
+  route {
+    cidr_block = "0.0.0.0/0"                 # VPC Public Subnet 내의 모든 요청(0.0.0.0/0)을 IGW로 라우팅
+    gateway_id = aws_internet_gateway.igw.id # Internet Gateway 참조 설정
+  }
+
+  tags = merge(var.tags, {
+    Name = "${format("%s-rt-pub-%02d", local.project_name, count.index + 1)}"
+  })
+}
+
+# 퍼블릭 라우팅 테이블 서브넷 연결
+resource "aws_route_table_association" "public_route_table_association" {
+  count = local.az_count
+
+  subnet_id      = aws_subnet.public_subnet[count.index].id
+  route_table_id = aws_route_table.public_route_table[count.index].id
+
+  depends_on = [
+    aws_route_table.public_route_table
+  ]
+}
+
+# 프라이빗 라우팅 테이블 생성 -> 2개의 zone(a, b)에 각각 생성
+resource "aws_route_table" "private_route_table" {
+  count = local.az_count
+
+  vpc_id = aws_vpc.main.id
+  route {
+    cidr_block = "0.0.0.0/0"            # VPC Private Subnet 대역의 모든 요청을 NAT로 라우팅
+    gateway_id = aws_nat_gateway.ngw.id # NAT Gateway 참조 설정
+  }
+
+  tags = merge(var.tags, {
+    Name = "${format("%s-rt-pri-%02d", local.project_name, count.index + 1)}"
+  })
+}
+
+# 프라이빗 라우팅 테이블 서브넷 연결
+resource "aws_route_table_association" "private_route_table_association" {
+  count = local.az_count
+
+  subnet_id      = aws_subnet.private_subnet[count.index].id
+  route_table_id = aws_route_table.private_route_table[count.index].id
+
+  depends_on = [
+    aws_route_table.private_route_table
+  ]
+}

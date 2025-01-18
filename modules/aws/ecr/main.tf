@@ -1,7 +1,4 @@
-# data "aws_ecr_repository" "ecr_repository" {
-#   name = 
-# }
-
+# ECR 리포지토리 생성
 resource "aws_ecr_repository" "ecr_repository" {
   for_each = var.ecr_repository
 
