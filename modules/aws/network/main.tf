@@ -5,7 +5,7 @@ resource "aws_vpc" "main" {
   enable_dns_support   = var.enable_dns_support   # DNS 사용 옵션, 기본 false(VPC 내 리소스가 AWS DNS 주소 사용 가능)
 
   tags = merge(var.tags, {
-    Name = "${local.project_name}-vpc"
+    Name = "${local.project_name}-vpc-${local.env}"
   })
 }
 

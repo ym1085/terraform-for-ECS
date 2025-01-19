@@ -1,11 +1,16 @@
+# 기존에 생성되어 있는 ecs_task_role 참조
 data "aws_iam_role" "ecs_task_role" {
-  name = var.ecs_task_role
+  for_each = var.ecs_task_definitions
+  name     = each.value.task_role
 }
 
+# 기존에 생성되어 있는 ecs_task_exec_role 참조
 data "aws_iam_role" "ecs_task_exec_role" {
-  name = var.ecs_task_exec_role
+  for_each = var.ecs_task_definitions
+  name     = each.value.task_exec_role
 }
 
+# ECS Task Definitions 템플릿 파일 생성
 data "template_file" "container_definitions" {
   for_each = tomap(var.ecs_task_definitions) # for_each로 반복할 맵 정의
   template = file("${path.module}/task_definitions.tpl")
@@ -15,6 +20,7 @@ data "template_file" "container_definitions" {
   }
 }
 
+# ECS 클러스터
 resource "aws_ecs_cluster" "ecs_cluster" {
   for_each = var.ecs_cluster
 
@@ -24,25 +30,28 @@ resource "aws_ecs_cluster" "ecs_cluster" {
     prevent_destroy = true
   }
 
-  tags = each.value.tags
+  tags = merge(var.tags, {
+    Name = "${each.value.cluster_name}-${each.value.env}"
+  })
 }
 
+# ECS Task Definition
 resource "aws_ecs_task_definition" "ecs_task_definition" {
   for_each = var.ecs_task_definitions
 
-  family                   = "${each.value.task_family}-${each.value.environment}"
-  cpu                      = var.ecs_task_total_cpu
-  memory                   = var.ecs_task_total_memory
-  network_mode             = var.ecs_network_mode
-  requires_compatibilities = [var.ecs_launch_type] # EC2, FARATE
+  family                   = "${each.value.task_family}-${each.value.env}"
+  cpu                      = each.value.task_total_cpu
+  memory                   = each.value.task_total_memory
+  network_mode             = each.value.network_mode
+  requires_compatibilities = [each.value.launch_type] # EC2, FARATE
 
-  # ECS Role
-  task_role_arn      = data.aws_iam_role.ecs_task_role.arn
-  execution_role_arn = data.aws_iam_role.ecs_task_exec_role.arn
+  # ECS Task Role & Task Exec Role 설정(기존에 생성되어 있는 Role 참조)
+  task_role_arn      = data.aws_iam_role.ecs_task_role[each.value.name].arn
+  execution_role_arn = data.aws_iam_role.ecs_task_exec_role[each.value.name].arn
 
   runtime_platform {
-    operating_system_family = var.runtime_platform_oprating_system_family
-    cpu_architecture        = var.runtime_platform_cpu_architecture
+    operating_system_family = each.value.runtime_platform_oprating_system_family
+    cpu_architecture        = each.value.runtime_platform_cpu_architecture
   }
 
   lifecycle {
@@ -63,15 +72,20 @@ resource "aws_ecs_task_definition" "ecs_task_definition" {
 
   # ECS Task Definition 파일을 읽어서
   container_definitions = data.template_file.container_definitions[each.key].rendered
+
+  tags = merge(var.tags, {
+    Name = "${each.value.task_family}-${each.value.env}"
+  })
 }
 
+# ECS 서비스
 resource "aws_ecs_service" "ecs_service" {
   for_each = var.ecs_service
 
-  launch_type                       = var.ecs_launch_type                                                          # ECS 런치 타입
-  iam_role                          = var.ecs_service_role                                                         # IAM Role
-  cluster                           = "${each.value.cluster_name}-${each.value.environment}"                       # ECS 클러스터 이름
-  name                              = "${each.value.service_name}-${each.value.environment}"                       # ECS 서비스 이름
+  launch_type                       = each.value.launch_type
+  iam_role                          = each.value.service_role                                                      # IAM Role
+  cluster                           = "${each.value.cluster_name}-${each.value.env}"                               # ECS 클러스터 이름
+  name                              = "${each.value.service_name}-${each.value.env}"                               # ECS 서비스 이름
   desired_count                     = each.value.desired_count                                                     # 원하는 태스크 개수
   health_check_grace_period_seconds = each.value.health_check_grace_period_sec                                     # 헬스 체크 그레이스 기간
   task_definition                   = aws_ecs_task_definition.ecs_task_definition[each.value.task_definitions].arn # Task Definition ARN
@@ -79,7 +93,7 @@ resource "aws_ecs_service" "ecs_service" {
   # 네트워크 구성 (Private Subnet 사용)
   network_configuration {
     subnets          = var.private_subnet_ids # subnet-xxxx, subnet-xxxx, subnet-xxxx
-    security_groups  = [var.ecs_task_sg_id]
+    security_groups  = [each.value.task_sg_id]
     assign_public_ip = each.value.assign_public_ip
   }
 
@@ -98,7 +112,7 @@ resource "aws_ecs_service" "ecs_service" {
 
   # 배포 컨트롤러 설정
   deployment_controller {
-    type = var.ecs_deployment_controller
+    type = each.value.deployment_controller
   }
 
   lifecycle {
@@ -111,5 +125,7 @@ resource "aws_ecs_service" "ecs_service" {
     aws_ecs_task_definition.ecs_task_definition
   ]
 
-  tags = each.value.tags # 태그 설정
+  tags = merge(var.tags, {
+    Name = "${each.value.service_name}-${each.value.env}"
+  })
 }
