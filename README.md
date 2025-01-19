@@ -51,3 +51,20 @@ terraform-for-ECS
 ├── .gitignore
 └── README.md
 ```
+
+## Terraform Resource Visualization
+
+```shell
+# root 경로 이동
+cd env/dev
+```
+
+```shell
+# terraform plan 확인
+terraform plan
+```
+
+```shell
+# terraform 시각화
+terraform graph > graph.dot
+```
