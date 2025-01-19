@@ -15,27 +15,39 @@ module "network" {
   public_subnets_cidr  = var.public_subnets_cidr  # 퍼블릭 서브넷 목록(172.x.x.x/24, 172.x.x.x/24)
   private_subnets_cidr = var.private_subnets_cidr # 프라이빗 서브넷 목록(172.x.x.x/24, 172.x.x.x/24)
   availability_zones   = var.availability_zones   # 가용영역
-  tags                 = var.tags                 # 공통 태그
+
+  # 프로젝트 기본 설정
+  project_name = var.project_name # 프로젝트명
+  env          = var.env          # 개발 환경 변수
+  tags         = var.tags         # 공통 태그
 }
 
 module "load_balancer" {
   source = "../../modules/aws/load_balancer"
 
-  vpc_id = module.network.vpc_id
-
+  # 로드밸런서 관련 설정
   alb               = var.alb               # 생성을 원하는 ALB 관련 정보
   alb_listener      = var.alb_listener      # 위에서 생성한 ALB Listener 관련 정보
   alb_listener_rule = var.alb_listener_rule # ALB Listener Rule
   target_group      = var.target_group      # ALB의 Target Group
+
+  # 프로젝트 기본 설정
+  tags   = var.tags
+  vpc_id = module.network.vpc_id
+}
+
+module "ecr" {
+  source = "../../modules/aws/ecr"
+
+  # ECR 관련 설정
+  ecr_repository = var.ecr_repository
+
+  # 프로젝트 기본 설정
+  tags = var.tags
 }
 
 module "compute" {
   source = "../../modules/aws/compute/ecs"
-
-  # 프로젝트 기본 설정
-  aws_region  = var.aws_region
-  aws_account = var.aws_account
-  environment = var.environment
 
   # 네트워크 설정
   public_subnet_ids    = var.public_subnet_ids
@@ -44,26 +56,20 @@ module "compute" {
   private_subnets_cidr = var.private_subnets_cidr
 
   # ECS 관련 설정
-  ecs_task_role         = var.ecs_task_role
-  ecs_task_exec_role    = var.ecs_task_exec_role
-  ecs_service_role      = var.ecs_service_role
-  ecs_network_mode      = var.ecs_network_mode
-  ecs_launch_type       = var.ecs_launch_type
-  ecs_task_total_cpu    = var.ecs_task_total_cpu
-  ecs_task_total_memory = var.ecs_task_total_memory
+  ecs_cluster          = var.ecs_cluster
+  ecs_task_definitions = var.ecs_task_definitions
+  ecs_service          = var.ecs_service
 
+  # ECS Service에서 ELB 연동 시 사용
   alb_tg_arn       = module.load_balancer.alb_target_group_arn
   alb_listener_arn = module.load_balancer.alb_listener_arn
 
-  runtime_platform_oprating_system_family = var.runtime_platform_oprating_system_family
-  runtime_platform_cpu_architecture       = var.runtime_platform_cpu_architecture
+  # 프로젝트 기본 설정
+  aws_region  = var.aws_region
+  aws_account = var.aws_account
+  env         = var.env
+  tags        = var.tags
 
-  ecs_deployment_controller  = var.ecs_deployment_controller
-  ecs_task_sg_id             = var.ecs_task_sg_id
-  ecs_cluster                = var.ecs_cluster
-  ecs_task_ecr_image_version = var.ecs_task_ecr_image_version
-  ecs_task_definitions       = var.ecs_task_definitions
-  ecs_service                = var.ecs_service
-
+  # ELB가 생성 된 후 ECS 생성 가능
   depends_on = [module.load_balancer]
 }

@@ -8,6 +8,12 @@ variable "project_name" {
   default     = "terraform-ecs"
 }
 
+# AWS 개발 환경
+variable "env" {
+  description = "AWS 개발 환경 설정"
+  type        = string
+}
+
 ####################
 # 네트워크 설정
 ####################

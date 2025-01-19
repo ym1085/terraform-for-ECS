@@ -24,15 +24,15 @@ variable "alb" {
     alb_enable_deletion_protection       = bool
     alb_enable_cross_zone_load_balancing = bool
     alb_idle_timeout                     = number
-    environment                          = string
-    tags                                 = map(string)
+    env                                  = string
   }))
 }
 
 # ALB Listencer
 variable "alb_listener" {
-  description = "ALB listener"
+  description = "ALB Listener 설정"
   type = map(object({
+    name              = string
     port              = number
     protocol          = string
     load_balancer_arn = string
@@ -40,7 +40,7 @@ variable "alb_listener" {
       type             = string
       target_group_arn = string
     })
-    tags = map(string)
+    env = string
   }))
 }
 
@@ -64,7 +64,7 @@ variable "target_group" {
     target_group_port        = number
     target_group_elb_type    = string
     target_group_target_type = string
-    environment              = string
+    env                      = string
     health_check = object({
       enabled             = bool
       healthy_threshold   = number
@@ -75,6 +75,13 @@ variable "target_group" {
       unhealthy_threshold = number
       internal            = bool
     })
-    tags = map(string)
   }))
+}
+
+####################
+# 공통 태그 설정
+####################
+variable "tags" {
+  description = "공통 태그 설정"
+  type        = map(string)
 }
