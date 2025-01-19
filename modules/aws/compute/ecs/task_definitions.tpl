@@ -1,7 +1,7 @@
 [
   %{ for container in containers }
   {
-    "name": "${container.name}-${environment}",
+    "name": "${container.name}-${env}",
     "image": "${container.image}:${container.version}",
     "cpu": ${container.cpu},
     "memory": ${container.memory},
@@ -12,13 +12,13 @@
         "hostPort": ${container.port},
         "protocol": "tcp"
       }
-    ]%{ if length(container.environment_variables) > 0 },
-    "environment": [
-      %{ for env_key, env_value in container.environment_variables }
+    ]%{ if length(container.env_variables) > 0 },
+    "env": [
+      %{ for env_key, env_value in container.env_variables }
       { 
         "name": "${env_key}", 
         "value": "${env_value}" 
-      }%{ if env_key != keys(container.environment_variables)[-1] },%{ endif }
+      }%{ if env_key != keys(container.env_variables)[-1] },%{ endif }
       %{ endfor }
     ]%{ endif },
     "mountPoints": [

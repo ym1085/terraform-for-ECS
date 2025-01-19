@@ -36,10 +36,9 @@ variable "aws_account" {
 }
 
 # AWS 개발 환경
-variable "environment" {
+variable "env" {
   description = "AWS 개발 환경 설정"
   type        = string
-  default     = "stage"
 }
 
 ####################
@@ -112,8 +111,7 @@ variable "alb" {
     alb_enable_deletion_protection       = bool
     alb_enable_cross_zone_load_balancing = bool
     alb_idle_timeout                     = number
-    environment                          = string
-    tags                                 = map(string)
+    env                                  = string
   }))
 }
 
@@ -121,6 +119,7 @@ variable "alb" {
 variable "alb_listener" {
   description = "ALB Listener 설정"
   type = map(object({
+    name              = string
     port              = number
     protocol          = string
     load_balancer_arn = string
@@ -128,7 +127,7 @@ variable "alb_listener" {
       type             = string
       target_group_arn = string
     })
-    tags = map(string)
+    env = string
   }))
 }
 
@@ -152,7 +151,7 @@ variable "target_group" {
     target_group_port        = number
     target_group_elb_type    = string
     target_group_target_type = string
-    environment              = string
+    env                      = string
     health_check = object({
       enabled             = bool
       healthy_threshold   = number
@@ -163,22 +162,21 @@ variable "target_group" {
       unhealthy_threshold = number
       internal            = bool
     })
-    tags = map(string)
   }))
 }
 
 ####################
 # ECR 설정
 ####################
+# ECR 리포지토리 생성
 variable "ecr_repository" {
   description = "ECR Private Image Repository 설정"
   type = map(object({
     ecr_repository_name      = string
-    environment              = string
     ecr_image_tag_mutability = string
     ecr_scan_on_push         = bool
     ecr_force_delete         = bool
-    tags                     = map(string)
+    env                      = string
   }))
 }
 
@@ -190,25 +188,7 @@ variable "ecs_cluster" {
   description = "ECS Cluster 설정"
   type = map(object({
     cluster_name = string
-    environment  = string
-    tags         = map(string)
-  }))
-}
-
-# ECS 서비스 생성
-variable "ecs_service" {
-  description = "ECS 서비스 설정"
-  type = map(object({
-    cluster_name                  = string
-    service_name                  = string # ECS 서비스 도메인명
-    desired_count                 = number # ECS 서비스 Task 개수
-    container_name                = string # ECS Container Name
-    container_port                = number # ALB Listen Container Port
-    task_definitions              = string
-    environment                   = string
-    health_check_grace_period_sec = number      # 헬스 체크 그레이스 기간
-    assign_public_ip              = bool        # 퍼블릭 IP 지정 여부
-    tags                          = map(string) # Optional : 추가 태그
+    env          = string
   }))
 }
 
@@ -216,20 +196,29 @@ variable "ecs_service" {
 variable "ecs_task_definitions" {
   description = "ECS Task Definition 설정"
   type = map(object({
-    task_family       = string
-    cpu               = number
-    memory            = number
-    environment       = string
-    ephemeral_storage = number
+    name                                    = string
+    task_role                               = string
+    task_exec_role                          = string
+    network_mode                            = string
+    launch_type                             = string
+    task_total_cpu                          = string
+    task_total_memory                       = string
+    runtime_platform_oprating_system_family = string
+    runtime_platform_cpu_architecture       = string
+    task_family                             = string
+    cpu                                     = number
+    memory                                  = number
+    env                                     = string
+    ephemeral_storage                       = number
     containers = list(object({
-      name                  = string
-      image                 = string
-      version               = string
-      cpu                   = number
-      memory                = number
-      port                  = number
-      essential             = bool
-      environment_variables = map(string)
+      name          = string
+      image         = string
+      version       = string
+      cpu           = number
+      memory        = number
+      port          = number
+      essential     = bool
+      env_variables = map(string)
       mount_points = list(object({
         sourceVolume  = string
         containerPath = string
@@ -245,79 +234,24 @@ variable "ecs_task_definitions" {
   }))
 }
 
-#####
-# FIXME: 아래 변수는 terraform.tfvars 외부 파라미터를 통해 받아서 사용하는 변수가 아님
-# 추후 아래 변수 사용 목적/용도 확인 후 외부 파라미터로 받든, 다른 방법을 통해 진행
-#####
-
-variable "ecs_task_role" {
-  description = "AWS ECS Task Role"
-  type        = string
-}
-
-variable "ecs_task_exec_role" {
-  description = "AWS ECS Task Execution Role"
-  type        = string
-}
-
-variable "ecs_service_role" {
-  description = "AWS ECS Service Role"
-  type        = string
-  default     = "AWSServiceRoleForECS"
-}
-
-variable "ecs_network_mode" {
-  description = "AWS ECS Network Mode"
-  type        = string
-  default     = "awsvpc"
-}
-
-variable "ecs_launch_type" {
-  description = "AWS ECS Launch Type"
-  type        = string
-  default     = "FARGATE"
-}
-
-variable "ecs_task_total_cpu" {
-  description = "AWS ECS Task Total CPU"
-  type        = number
-  default     = 256
-}
-
-variable "ecs_task_total_memory" {
-  description = "AWS ECS Task Total Memory"
-  type        = number
-  default     = 512
-}
-
-variable "runtime_platform_oprating_system_family" {
-  description = "AWS ECS Runtime Platform OS"
-  type        = string
-  default     = "LINUX"
-}
-
-variable "runtime_platform_cpu_architecture" {
-  description = "AWS ECS Runtime Platform CPU"
-  type        = string
-  default     = "X86_64"
-}
-
-# CODE DEPLOY로 지정하려면 아래 타입 변경 필요
-# ECS | CODE_DEPLOY | EXTERNAL
-variable "ecs_deployment_controller" {
-  description = "AWS ECS Deployment Controller"
-  type        = string
-  default     = "ECS"
-}
-
-variable "ecs_task_sg_id" {
-  description = "AWS ECS Task SG"
-  type        = string
-}
-
-variable "ecs_task_ecr_image_version" {
-  description = "AWS ECR Image Version"
-  type        = string
+# ECS 서비스 생성
+variable "ecs_service" {
+  description = "ECS 서비스 설정"
+  type = map(object({
+    service_role                  = string # ECS Service Role
+    cluster_name                  = string
+    service_name                  = string # ECS 서비스 도메인명
+    desired_count                 = number # ECS 서비스 Task 개수
+    container_name                = string # ECS Container Name
+    container_port                = number # ALB Listen Container Port
+    task_definitions              = string
+    env                           = string
+    health_check_grace_period_sec = number # 헬스 체크 그레이스 기간
+    assign_public_ip              = bool   # 퍼블릭 IP 지정 여부
+    deployment_controller         = string
+    task_sg_id                    = string # ECS SG 지정
+    launch_type                   = string
+  }))
 }
 
 ####################

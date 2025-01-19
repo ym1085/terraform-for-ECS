@@ -1,3 +1,13 @@
+/**
+  Terraform v1.10.4 on darwin_arm64
+  + provider registry.terraform.io/hashicorp/aws v4.67.0
+  + provider registry.terraform.io/hashicorp/random v3.6.3
+  + provider registry.terraform.io/hashicorp/template v2.2.0
+
+  이슈 관련 해소 블로그
+  - [[Terraform] registry.terraform.io/hashicorp/template 2.2.0 doesn't match...](https://chordplaylist.tistory.com/355)
+*/
+
 # 프로바이더(벤더) 설정
 provider "aws" {
   region = var.aws_region
