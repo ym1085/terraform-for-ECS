@@ -2,17 +2,19 @@
 resource "aws_lb" "alb" {
   for_each = var.alb
 
-  name               = "${each.value.alb_name}-${each.value.environment}" # ELB 이름
-  internal           = each.value.alb_internal                            # ELB internal or external 여부
-  load_balancer_type = each.value.alb_load_balancer_type                  # ELB 타입
-  subnets            = each.value.alb_public_subnets                      # ALB 서브넷
-  security_groups    = each.value.alb_sg_id                               # ALB 보안 그룹
+  name               = "${each.value.alb_name}-${each.value.env}" # ELB 이름
+  internal           = each.value.alb_internal                    # ELB internal or external 여부
+  load_balancer_type = each.value.alb_load_balancer_type          # ELB 타입
+  subnets            = each.value.alb_public_subnets              # ALB 서브넷
+  security_groups    = each.value.alb_sg_id                       # ALB 보안 그룹
 
   enable_deletion_protection       = each.value.alb_enable_deletion_protection       # 삭제 방지 활성화 여부
   enable_cross_zone_load_balancing = each.value.alb_enable_cross_zone_load_balancing # Cross-Zone 트래픽 분배 활성화 여부
   idle_timeout                     = each.value.alb_idle_timeout                     # 타임아웃 유휴시간 지정
 
-  tags = each.value.tags # 태그 지정
+  tags = merge(var.tags, {
+    Name = "${each.value.alb_name}-${each.value.env}"
+  })
 
   lifecycle {
     prevent_destroy = true
@@ -32,14 +34,16 @@ resource "aws_lb_listener" "alb_listener" {
     target_group_arn = aws_lb_target_group.target_group[each.value.default_action.target_group_arn].arn
   }
 
-  tags       = each.value.tags
+  tags = merge(var.tags, {
+    Name = "${each.value.name}-${each.value.env}"
+  })
+
   depends_on = [aws_lb.alb]
 
   lifecycle {
     prevent_destroy = true
   }
 }
-
 
 # ALB Listener Rule 생성
 resource "aws_lb_listener_rule" "alb_listener_rule" {
@@ -74,7 +78,7 @@ resource "aws_lb_target_group" "target_group" {
   for_each = var.target_group
 
   vpc_id      = var.vpc_id                                                    # VPC ID 지정(외부 모듈 변수 or ??)
-  name        = "${each.value.target_group_name}-${each.value.environment}"   # Target Group 이름 지정(원하는 이름 지정)
+  name        = "${each.value.target_group_name}-${each.value.env}"           # Target Group 이름 지정(원하는 이름 지정)
   port        = each.value.target_group_port                                  # Target Group Port 지정
   protocol    = each.value.target_group_target_type == "ALB" ? "HTTP" : "TCP" # Target Group 타입이 ALB면 HTTP, 아니면 TCP(NLB)
   target_type = each.value.target_group_target_type                           # Target Group 타입 지정(IP, 인스턴스, ALB..)
@@ -91,7 +95,9 @@ resource "aws_lb_target_group" "target_group" {
   }
 
   # Tag 지정
-  tags = each.value.tags
+  tags = merge(var.tags, {
+    Name = "${each.value.target_group_name}-${each.value.env}"
+  })
 
   lifecycle {
     prevent_destroy = true
