@@ -1,6 +1,6 @@
 # Terraform ECS
 
-> Terraform을 활용해 AWS VPC, Subnet, ECS 환경을 구축하기 위한 리포지토리 입니다.
+> A repository for building AWS VPC, Subnet, and ECS environments using Terraform.
 
 ## Project Tech Spec
 
