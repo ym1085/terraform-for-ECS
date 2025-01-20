@@ -5,7 +5,7 @@ resource "aws_lb" "alb" {
   name               = "${each.value.alb_name}-${each.value.env}" # ELB 이름
   internal           = each.value.alb_internal                    # ELB internal or external 여부
   load_balancer_type = each.value.alb_load_balancer_type          # ELB 타입
-  subnets            = each.value.alb_public_subnets              # ALB 서브넷
+  subnets            = var.public_subnet_ids                      # ALB 서브넷
   security_groups    = each.value.alb_sg_id                       # ALB 보안 그룹
 
   enable_deletion_protection       = each.value.alb_enable_deletion_protection       # 삭제 방지 활성화 여부

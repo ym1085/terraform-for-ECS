@@ -70,16 +70,16 @@ variable "private_subnets_cidr" {
 }
 
 # 퍼블릭 서브넷 ID
-variable "public_subnet_ids" {
-  description = "퍼블릭 서브넷 대역 ID([subnet-xxxxxxxx, subnet-xxxxxxxx])"
-  type        = list(string)
-}
+# variable "public_subnet_ids" {
+#   description = "퍼블릭 서브넷 대역 ID([subnet-xxxxxxxx, subnet-xxxxxxxx])"
+#   type        = list(string)
+# }
 
 # 프라이빗 서브넷 ID
-variable "private_subnet_ids" {
-  description = "프라이빗 서브넷 대역 ID([subnet-xxxxxxxx, subnet-xxxxxxxx])"
-  type        = list(string)
-}
+# variable "private_subnet_ids" {
+#   description = "프라이빗 서브넷 대역 ID([subnet-xxxxxxxx, subnet-xxxxxxxx])"
+#   type        = list(string)
+# }
 
 # DNS Hostname 사용 옵션, 기본 false(VPC 내 리소스가 AWS DNS 주소 사용 가능)
 variable "enable_dns_support" {
@@ -97,7 +97,6 @@ variable "enable_dns_hostnames" {
 ####################
 # 로드밸런서 설정
 ####################
-
 # Application Load Balancer
 # ALB의 KEY 이름과, Target Group 변수의 KEY 이름을 일치시켜야 함
 variable "alb" {
@@ -106,7 +105,6 @@ variable "alb" {
     alb_name                             = string
     alb_internal                         = bool
     alb_load_balancer_type               = string
-    alb_public_subnets                   = list(string)
     alb_sg_id                            = list(string)
     alb_enable_deletion_protection       = bool
     alb_enable_cross_zone_load_balancing = bool
