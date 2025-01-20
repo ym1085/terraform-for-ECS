@@ -5,6 +5,13 @@
 ####################
 # 프로젝트 기본 설정
 ####################
+# 프로젝트 이름
+variable "project_name" {
+  description = "프로젝트 이름 설정"
+  type        = string
+  default     = "terraform-ecs"
+}
+
 # AWS 가용영역
 variable "aws_region" {
   description = "AWS 가용영역 설정"
@@ -14,6 +21,12 @@ variable "aws_region" {
     condition     = contains(["ap-northeast-2"], var.aws_region)
     error_message = "지원되지 않는 AWS 리전입니다."
   }
+}
+
+# AWS 가용영역
+variable "availability_zones" {
+  description = "가용 영역 설정"
+  type        = list(string)
 }
 
 # AWS 계정 ID
@@ -32,6 +45,11 @@ variable "env" {
 ####################
 # 네트워크 설정
 ####################
+variable "vpc_id" {
+  description = "VPC ID 설정"
+  type        = string
+}
+
 # VPC CIDR
 variable "vpc_cidr" {
   description = "VPC CIDR 설정"
@@ -73,6 +91,24 @@ variable "ecs_cluster" {
     cluster_name = string
     env          = string
   }))
+}
+
+# ECS Service 보안그룹
+variable "ecs_security_group" {
+  description = "ECS Service 보안그룹 설정"
+  type        = string
+}
+
+# ECS Task role arn
+variable "ecs_task_role_arn" {
+  description = "security module에서 생성된 role arn을 참조"
+  type        = string
+}
+
+# ECS Task exec role arn
+variable "ecs_task_exec_role_arn" {
+  description = "security module에서 생성된 role arn을 참조"
+  type        = string
 }
 
 # AWS ECS Task
@@ -132,10 +168,13 @@ variable "ecs_service" {
     health_check_grace_period_sec = number # 헬스 체크 그레이스 기간
     assign_public_ip              = bool   # 퍼블릭 IP 지정 여부
     deployment_controller         = string
-    task_sg_id                    = string # ECS SG 지정
     launch_type                   = string
   }))
 }
+
+####################
+# 로드밸런서 설정
+####################
 
 # ECS Service에서 사용하는 ALB TG ARN으로, loadbalancer module에서 리소스 생성 후 외부 변수로 받는다
 variable "alb_tg_arn" {
@@ -147,6 +186,12 @@ variable "alb_tg_arn" {
 variable "alb_listener_arn" {
   description = "AWS ECS ALB LISTENER ARN"
   type        = map(string)
+}
+
+# ECS에서 사용하는 ALB 보안 그룹 ID
+variable "alb_security_group_id" {
+  description = "ECS에서 사용하는 ALB 보안 그룹 ID"
+  type        = string
 }
 
 ####################

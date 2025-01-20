@@ -1,14 +1,14 @@
 # 기존에 생성되어 있는 ecs_task_role 참조
-data "aws_iam_role" "ecs_task_role" {
-  for_each = var.ecs_task_definitions
-  name     = each.value.task_role
-}
+# data "aws_iam_role" "ecs_task_role" {
+#   for_each = var.ecs_task_definitions
+#   name     = each.value.task_role
+# }
 
 # 기존에 생성되어 있는 ecs_task_exec_role 참조
-data "aws_iam_role" "ecs_task_exec_role" {
-  for_each = var.ecs_task_definitions
-  name     = each.value.task_exec_role
-}
+# data "aws_iam_role" "ecs_task_exec_role" {
+#   for_each = var.ecs_task_definitions
+#   name     = each.value.task_exec_role
+# }
 
 # ECS Task Definitions 템플릿 파일 생성
 data "template_file" "container_definitions" {
@@ -26,6 +26,7 @@ resource "aws_ecs_cluster" "ecs_cluster" {
 
   name = each.value.cluster_name
 
+  # Terraform 삭제 방지
   lifecycle {
     prevent_destroy = true
   }
@@ -45,9 +46,13 @@ resource "aws_ecs_task_definition" "ecs_task_definition" {
   network_mode             = each.value.network_mode
   requires_compatibilities = [each.value.launch_type] # EC2, FARATE
 
-  # ECS Task Role & Task Exec Role 설정(기존에 생성되어 있는 Role 참조)
-  task_role_arn      = data.aws_iam_role.ecs_task_role[each.value.name].arn
-  execution_role_arn = data.aws_iam_role.ecs_task_exec_role[each.value.name].arn
+  # ECS Task Role & Task Exec Role 설정
+  task_role_arn      = var.ecs_task_role_arn
+  execution_role_arn = var.ecs_task_exec_role_arn
+
+  # (기존에 생성되어 있는 Role 참조)
+  # task_role_arn      = data.aws_iam_role.ecs_task_role[each.value.name].arn
+  # execution_role_arn = data.aws_iam_role.ecs_task_exec_role[each.value.name].arn
 
   runtime_platform {
     operating_system_family = each.value.runtime_platform_oprating_system_family
@@ -93,7 +98,7 @@ resource "aws_ecs_service" "ecs_service" {
   # 네트워크 구성 (Private Subnet 사용)
   network_configuration {
     subnets          = var.private_subnet_ids # subnet-xxxx, subnet-xxxx, subnet-xxxx
-    security_groups  = [each.value.task_sg_id]
+    security_groups  = [aws_security_group.ecs_security_group.id]
     assign_public_ip = each.value.assign_public_ip
   }
 
@@ -115,6 +120,7 @@ resource "aws_ecs_service" "ecs_service" {
     type = each.value.deployment_controller
   }
 
+  # Terraform 삭제 방지
   lifecycle {
     prevent_destroy = true
   }
@@ -128,4 +134,36 @@ resource "aws_ecs_service" "ecs_service" {
   tags = merge(var.tags, {
     Name = "${each.value.service_name}-${each.value.env}"
   })
+}
+
+# ECS Service에 Attachment 되는 보안그룹 생성
+resource "aws_security_group" "ecs_security_group" {
+  name        = var.ecs_security_group
+  description = "Allow ECS Task inbound traffic and outbound traffic"
+  vpc_id      = var.vpc_id # 보안그룹을 생성할 VPC 위치 지정
+
+  # 보안 그룹은 기본적으로 삭제 -> 생성 순서로 이어진다
+  # 그렇기에 Life Cycle을 지정해준다
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  tags = merge(var.tags, {
+    Name = "${var.ecs_security_group}-${var.env}"
+  })
+}
+
+resource "aws_security_group_rule" "ecs_ingress_security_group" {
+  for_each = local.ecs_security_group_rules.ingress_rules
+
+  description       = "Allow ecs service to receive traffic from Public ALB"
+  security_group_id = aws_security_group.ecs_security_group.id
+  type              = each.value.type
+  from_port         = each.value.from_port # 포트 시작 허용 범위
+  to_port           = each.value.to_port   # 포트 종료 허용 범위
+  protocol          = each.value.ip_protocol
+
+  # 조건적으로 참조된 보안 그룹 또는 CIDR 블록 사용
+  source_security_group_id = try(each.value.referenced_security_group_id, null)
+  cidr_blocks              = try([each.value.cidr_ipv4], null)
 }
