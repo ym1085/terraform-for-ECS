@@ -1,4 +1,26 @@
 ####################
+# 프로젝트 기본 설정
+####################
+# 프로젝트 이름
+variable "project_name" {
+  description = "프로젝트 이름 설정"
+  type        = string
+  default     = "terraform-ecs"
+}
+
+# AWS 가용영역
+variable "availability_zones" {
+  description = "가용 영역 설정"
+  type        = list(string)
+}
+
+# AWS 개발 환경
+variable "env" {
+  description = "AWS 개발 환경 설정"
+  type        = string
+}
+
+####################
 # 네트워크 설정
 ####################
 # VPC ID(이미 생성되어 있는 VPC ID를 data 통해 받아오거나, 아니면 생성된 VPC ID를 넣는다)
@@ -25,12 +47,18 @@ variable "alb" {
     alb_name                             = string
     alb_internal                         = bool
     alb_load_balancer_type               = string
-    alb_sg_id                            = list(string)
     alb_enable_deletion_protection       = bool
     alb_enable_cross_zone_load_balancing = bool
     alb_idle_timeout                     = number
     env                                  = string
   }))
+}
+
+# ALB 보안그룹 이름
+variable "alb_security_group" {
+  description = "ALB 보안그룹 이름"
+  type        = string
+  default     = "search-alb-sg"
 }
 
 # ALB Listencer

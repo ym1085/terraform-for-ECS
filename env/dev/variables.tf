@@ -105,12 +105,18 @@ variable "alb" {
     alb_name                             = string
     alb_internal                         = bool
     alb_load_balancer_type               = string
-    alb_sg_id                            = list(string)
     alb_enable_deletion_protection       = bool
     alb_enable_cross_zone_load_balancing = bool
     alb_idle_timeout                     = number
     env                                  = string
   }))
+}
+
+# ALB 보안그룹 이름
+variable "alb_security_group" {
+  description = "ALB 보안그룹 이름"
+  type        = string
+  default     = "search-alb-sg"
 }
 
 # ALB Listencer
@@ -190,6 +196,33 @@ variable "ecs_cluster" {
   }))
 }
 
+# ECS Service 보안그룹
+variable "ecs_security_group" {
+  description = "ECS Service 보안그룹 설정"
+  type        = string
+}
+
+# ECS Role
+variable "ecs_task_role" {
+  description = "ECS Task Role 설정"
+  type        = string
+}
+
+variable "ecs_task_role_policy" {
+  description = "ECS Task Policy 설정"
+  type        = string
+}
+
+variable "ecs_task_exec_role" {
+  description = "ECS Task Exec Role 설정"
+  type        = string
+}
+
+variable "ecs_task_exec_role_policy" {
+  description = "ECS Task Exec Policy 설정"
+  type        = string
+}
+
 # ECS Task Definitions 생성
 variable "ecs_task_definitions" {
   description = "ECS Task Definition 설정"
@@ -247,7 +280,6 @@ variable "ecs_service" {
     health_check_grace_period_sec = number # 헬스 체크 그레이스 기간
     assign_public_ip              = bool   # 퍼블릭 IP 지정 여부
     deployment_controller         = string
-    task_sg_id                    = string # ECS SG 지정
     launch_type                   = string
   }))
 }
