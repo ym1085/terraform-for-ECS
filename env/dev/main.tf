@@ -30,10 +30,15 @@ module "load_balancer" {
   alb_listener      = var.alb_listener      # 위에서 생성한 ALB Listener 관련 정보
   alb_listener_rule = var.alb_listener_rule # ALB Listener Rule
   target_group      = var.target_group      # ALB의 Target Group
+  public_subnet_ids = module.network.public_subnet_ids
 
   # 프로젝트 기본 설정
   tags   = var.tags
   vpc_id = module.network.vpc_id
+
+  depends_on = [
+    module.network
+  ]
 }
 
 module "ecr" {
@@ -50,10 +55,10 @@ module "compute" {
   source = "../../modules/aws/compute/ecs"
 
   # 네트워크 설정
-  public_subnet_ids    = var.public_subnet_ids
-  private_subnet_ids   = var.private_subnet_ids
   public_subnets_cidr  = var.public_subnets_cidr
   private_subnets_cidr = var.private_subnets_cidr
+  public_subnet_ids    = module.network.public_subnet_ids  # Network의 output 변수 사용
+  private_subnet_ids   = module.network.private_subnet_ids # Network의 output 변수 사용
 
   # ECS 관련 설정
   ecs_cluster          = var.ecs_cluster
@@ -61,8 +66,8 @@ module "compute" {
   ecs_service          = var.ecs_service
 
   # ECS Service에서 ELB 연동 시 사용
-  alb_tg_arn       = module.load_balancer.alb_target_group_arn
-  alb_listener_arn = module.load_balancer.alb_listener_arn
+  alb_tg_arn       = module.load_balancer.alb_target_group_arn # Loadbalancer의 output 변수 사용
+  alb_listener_arn = module.load_balancer.alb_listener_arn     # Loadbalancer의 output 변수 사용
 
   # 프로젝트 기본 설정
   aws_region  = var.aws_region
@@ -71,5 +76,8 @@ module "compute" {
   tags        = var.tags
 
   # ELB가 생성 된 후 ECS 생성 가능
-  depends_on = [module.load_balancer]
+  depends_on = [
+    module.network,
+    module.load_balancer
+  ]
 }

@@ -7,6 +7,12 @@ variable "vpc_id" {
   type        = string
 }
 
+# 퍼블릭 서브넷
+variable "public_subnet_ids" {
+  description = "퍼블릭 서브넷 대역 ID([subnet-xxxxxxxx, subnet-xxxxxxxx])"
+  type        = list(string)
+}
+
 ####################
 # 로드밸런서 설정
 ####################
@@ -19,7 +25,6 @@ variable "alb" {
     alb_name                             = string
     alb_internal                         = bool
     alb_load_balancer_type               = string
-    alb_public_subnets                   = list(string)
     alb_sg_id                            = list(string)
     alb_enable_deletion_protection       = bool
     alb_enable_cross_zone_load_balancing = bool

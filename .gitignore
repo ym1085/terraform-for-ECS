@@ -134,8 +134,10 @@ dist
 *.tfstate.backup 
 *.tfvars
 .terraform.tfstate.lock.info
+.apikey.txt
 
 # 모듈 디렉토리 
 .terraform/
+.pluralith/
 
 .DS_Store
