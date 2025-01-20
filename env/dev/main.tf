@@ -26,15 +26,19 @@ module "load_balancer" {
   source = "../../modules/aws/load_balancer"
 
   # 로드밸런서 관련 설정
-  alb               = var.alb               # 생성을 원하는 ALB 관련 정보
-  alb_listener      = var.alb_listener      # 위에서 생성한 ALB Listener 관련 정보
-  alb_listener_rule = var.alb_listener_rule # ALB Listener Rule
-  target_group      = var.target_group      # ALB의 Target Group
-  public_subnet_ids = module.network.public_subnet_ids
+  alb                = var.alb                # 생성을 원하는 ALB 관련 정보
+  alb_listener       = var.alb_listener       # 위에서 생성한 ALB Listener 관련 정보
+  alb_listener_rule  = var.alb_listener_rule  # ALB Listener Rule
+  target_group       = var.target_group       # ALB의 Target Group
+  alb_security_group = var.alb_security_group # ALB 보안그룹 이름
+  public_subnet_ids  = module.network.public_subnet_ids
 
   # 프로젝트 기본 설정
-  tags   = var.tags
-  vpc_id = module.network.vpc_id
+  project_name       = var.project_name
+  env                = var.env
+  availability_zones = var.availability_zones
+  tags               = var.tags
+  vpc_id             = module.network.vpc_id
 
   depends_on = [
     module.network
@@ -51,33 +55,51 @@ module "ecr" {
   tags = var.tags
 }
 
+module "security" {
+  source = "../../modules/aws/security"
+
+  # ECS IAM 관련 설정
+  ecs_task_role             = var.ecs_task_role
+  ecs_task_role_policy      = var.ecs_task_role_policy
+  ecs_task_exec_role        = var.ecs_task_exec_role
+  ecs_task_exec_role_policy = var.ecs_task_exec_role_policy
+}
+
 module "compute" {
   source = "../../modules/aws/compute/ecs"
 
   # 네트워크 설정
+  vpc_id               = module.network.vpc_id
   public_subnets_cidr  = var.public_subnets_cidr
   private_subnets_cidr = var.private_subnets_cidr
   public_subnet_ids    = module.network.public_subnet_ids  # Network의 output 변수 사용
   private_subnet_ids   = module.network.private_subnet_ids # Network의 output 변수 사용
 
   # ECS 관련 설정
-  ecs_cluster          = var.ecs_cluster
-  ecs_task_definitions = var.ecs_task_definitions
-  ecs_service          = var.ecs_service
+  ecs_cluster            = var.ecs_cluster
+  ecs_task_definitions   = var.ecs_task_definitions
+  ecs_service            = var.ecs_service
+  ecs_task_role_arn      = module.security.ecs_task_role_arn      # task role arn
+  ecs_task_exec_role_arn = module.security.ecs_task_exec_role_arn # task exec role arn
+  ecs_security_group     = var.ecs_security_group                 # ECS Service 보안그룹 지정
 
   # ECS Service에서 ELB 연동 시 사용
-  alb_tg_arn       = module.load_balancer.alb_target_group_arn # Loadbalancer의 output 변수 사용
-  alb_listener_arn = module.load_balancer.alb_listener_arn     # Loadbalancer의 output 변수 사용
+  alb_tg_arn            = module.load_balancer.alb_target_group_arn  # Loadbalancer의 output 변수 사용
+  alb_listener_arn      = module.load_balancer.alb_listener_arn      # Loadbalancer의 output 변수 사용
+  alb_security_group_id = module.load_balancer.alb_security_group_id # ECS에서 사용하는 ALB 보안 그룹 ID
 
   # 프로젝트 기본 설정
-  aws_region  = var.aws_region
-  aws_account = var.aws_account
-  env         = var.env
-  tags        = var.tags
+  project_name       = var.project_name
+  availability_zones = var.availability_zones
+  aws_region         = var.aws_region
+  aws_account        = var.aws_account
+  env                = var.env
+  tags               = var.tags
 
-  # ELB가 생성 된 후 ECS 생성 가능
+  # 아래 모듈 리소스 생성 후, ecs 생성 가능
   depends_on = [
-    module.network,
-    module.load_balancer
+    module.network,       # network 모듈 참조
+    module.load_balancer, # load balancer 모듈 참조
+    module.security       # security 모듈 참조
   ]
 }

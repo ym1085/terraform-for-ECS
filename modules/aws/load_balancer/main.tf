@@ -6,7 +6,7 @@ resource "aws_lb" "alb" {
   internal           = each.value.alb_internal                    # ELB internal or external 여부
   load_balancer_type = each.value.alb_load_balancer_type          # ELB 타입
   subnets            = var.public_subnet_ids                      # ALB 서브넷
-  security_groups    = each.value.alb_sg_id                       # ALB 보안 그룹
+  security_groups    = [aws_security_group.alb_security_group.id] # ALB 보안 그룹
 
   enable_deletion_protection       = each.value.alb_enable_deletion_protection       # 삭제 방지 활성화 여부
   enable_cross_zone_load_balancing = each.value.alb_enable_cross_zone_load_balancing # Cross-Zone 트래픽 분배 활성화 여부
@@ -102,4 +102,29 @@ resource "aws_lb_target_group" "target_group" {
   lifecycle {
     prevent_destroy = true
   }
+}
+
+# ALB 보안그룹 생성
+resource "aws_security_group" "alb_security_group" {
+  name        = var.alb_security_group
+  description = "Allow Public inbound traffic and outbound traffic"
+  vpc_id      = var.vpc_id
+
+  tags = merge(var.tags, {
+    Name = "${var.alb_security_group}-${var.env}"
+  })
+}
+
+# ALB 보안그룹 Rule 생성
+resource "aws_security_group_rule" "alb_security_group_rule" {
+  for_each = local.alb_security_group_rules.ingress_rules
+
+  description       = "Allow Public inbound traffic and outbound traffic"
+  security_group_id = aws_security_group.alb_security_group.id
+  type              = each.value.type
+  from_port         = each.value.from_port
+  to_port           = each.value.to_port
+  protocol          = each.value.ip_protocol
+
+  cidr_blocks = try([each.value.cidr_ipv4], null)
 }
