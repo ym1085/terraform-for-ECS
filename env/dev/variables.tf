@@ -284,6 +284,16 @@ variable "ecs_service" {
   }))
 }
 
+################
+# S3 설정
+################
+variable "s3_bucket" {
+  description = "생성하고자 하는 S3 버킷 정보 기재"
+  type = map(object({
+    bucket_name = string
+  }))
+}
+
 ####################
 # 공통 태그 설정
 ####################
