@@ -36,7 +36,7 @@ resource "aws_subnet" "private_subnet" {
     # %: 포맷팅의 시작
     # %s: 문자열 데이터를 삽입하겠다는 의미
     # %02d: 최소 2자리 보장
-    Name = "${format("%s-sub-pub-%02d", local.project_name, count.index + 1)}"
+    Name = "${format("%s-sub-pri-%02d", local.project_name, count.index + 1)}"
   })
 }
 
