@@ -16,7 +16,8 @@ data "template_file" "container_definitions" {
   template = file("${path.module}/task_definitions.tpl")
 
   vars = {
-    containers = jsonencode(each.value.containers)
+    containers                  = jsonencode(each.value.containers) # container 정보
+    ecs_container_image_version = var.ecs_container_image_version   # container image version
   }
 }
 
@@ -24,12 +25,12 @@ data "template_file" "container_definitions" {
 resource "aws_ecs_cluster" "ecs_cluster" {
   for_each = var.ecs_cluster
 
-  name = each.value.cluster_name
+  name = "${each.value.cluster_name}-${each.value.env}" # core-search-cluster-stg
 
   # Terraform 삭제 방지
-  lifecycle {
-    prevent_destroy = true
-  }
+  # lifecycle {
+  #   prevent_destroy = true
+  # }
 
   tags = merge(var.tags, {
     Name = "${each.value.cluster_name}-${each.value.env}"
@@ -60,8 +61,8 @@ resource "aws_ecs_task_definition" "ecs_task_definition" {
   }
 
   lifecycle {
-    ignore_changes  = [container_definitions]
-    prevent_destroy = true # 삭제 방지
+    ignore_changes = [container_definitions]
+    # prevent_destroy = true # 삭제 방지
   }
 
   # task_definitions.tpl 파일에 있는 mountPoints 이름을 volume으로 사용
@@ -121,9 +122,9 @@ resource "aws_ecs_service" "ecs_service" {
   }
 
   # Terraform 삭제 방지
-  lifecycle {
-    prevent_destroy = true
-  }
+  # lifecycle {
+  #   prevent_destroy = true
+  # }
 
   # ECS Service는 Cluster, TD가 생성된 이후에 생성 되어야 함
   depends_on = [
