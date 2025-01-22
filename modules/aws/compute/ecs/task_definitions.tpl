@@ -1,8 +1,8 @@
 [
   %{ for container in containers }
   {
-    "name": "${container.name}-${env}",
-    "image": "${container.image}:${container.version}",
+    "name": "${container.name}-${container.env}",
+    "image": "${container.image}:${ecs_container_image_version}",
     "cpu": ${container.cpu},
     "memory": ${container.memory},
     "essential": ${container.essential},

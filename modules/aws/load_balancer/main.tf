@@ -16,9 +16,9 @@ resource "aws_lb" "alb" {
     Name = "${each.value.alb_name}-${each.value.env}"
   })
 
-  lifecycle {
-    prevent_destroy = true
-  }
+  # lifecycle {
+  #   prevent_destroy = true
+  # }
 }
 
 # ALB Listener 생성
@@ -40,9 +40,9 @@ resource "aws_lb_listener" "alb_listener" {
 
   depends_on = [aws_lb.alb]
 
-  lifecycle {
-    prevent_destroy = true
-  }
+  # lifecycle {
+  #   prevent_destroy = true
+  # }
 }
 
 # ALB Listener Rule 생성
@@ -68,9 +68,9 @@ resource "aws_lb_listener_rule" "alb_listener_rule" {
     aws_lb_listener.alb_listener
   ]
 
-  lifecycle {
-    prevent_destroy = true
-  }
+  # lifecycle {
+  #   prevent_destroy = true
+  # }
 }
 
 # ALB Target Group 생성
@@ -99,9 +99,9 @@ resource "aws_lb_target_group" "target_group" {
     Name = "${each.value.target_group_name}-${each.value.env}"
   })
 
-  lifecycle {
-    prevent_destroy = true
-  }
+  # lifecycle {
+  #   prevent_destroy = true
+  # }
 }
 
 # ALB 보안그룹 생성
