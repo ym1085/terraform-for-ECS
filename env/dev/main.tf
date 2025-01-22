@@ -103,3 +103,15 @@ module "compute" {
     module.security       # security 모듈 참조
   ]
 }
+
+module "storage" {
+  source = "../../modules/aws/storage"
+
+  # S3 Bucket 관련 설정
+  s3_bucket = var.s3_bucket
+
+  # 프로젝트 기본 설정
+  project_name = var.project_name
+  env          = var.env
+  tags         = var.tags
+}
