@@ -84,6 +84,11 @@ Welcome to Pluralith!
   ✔ API key is valid, you are authenticated! # API KEY 유효성 이상 x
 ```
 
+```shell
+# ecs container image의 경우 환경변수로 빼둔다
+export TF_VAR_ecs_container_image_version=1.0.0
+```
+
 ### 03. Pluralith Graph
 
 - pluralith graph 수행
