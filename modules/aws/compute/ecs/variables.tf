@@ -39,7 +39,7 @@ variable "aws_account" {
 variable "env" {
   description = "AWS 개발 환경 설정"
   type        = string
-  default     = "stage"
+  default     = "stg"
 }
 
 ####################
@@ -137,9 +137,9 @@ variable "ecs_task_definitions" {
     env                                     = string
     ephemeral_storage                       = number
     containers = list(object({
-      name          = string
-      image         = string
-      version       = string
+      name  = string
+      image = string
+      #version       = string
       cpu           = number
       memory        = number
       port          = number

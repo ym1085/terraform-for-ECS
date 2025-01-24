@@ -8,7 +8,7 @@ resource "aws_iam_role" "ecs_task_role" {
         Action = "sts:AssumeRole"
         Effect = "Allow"
         Principal = {
-          Service = "ecs.tasks.amazonaws.com"
+          Service = "ecs-tasks.amazonaws.com"
         }
       }
     ]

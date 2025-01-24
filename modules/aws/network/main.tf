@@ -20,7 +20,7 @@ resource "aws_subnet" "public_subnet" {
   map_public_ip_on_launch = true # 서브넷 내의 인스턴스의 퍼블릭 IP를 자동 할당 여부 지정
 
   tags = merge(var.tags, {
-    Name = "${format("%s-sub-pub-%02d", local.project_name, count.index + 1)}"
+    Name = "${format("%s-sub-pub-%s-%02d", local.project_name, local.env, count.index + 1)}"
   })
 }
 
@@ -36,7 +36,7 @@ resource "aws_subnet" "private_subnet" {
     # %: 포맷팅의 시작
     # %s: 문자열 데이터를 삽입하겠다는 의미
     # %02d: 최소 2자리 보장
-    Name = "${format("%s-sub-pri-%02d", local.project_name, count.index + 1)}"
+    Name = "${format("%s-sub-pri-%s-%02d", local.project_name, local.env, count.index + 1)}"
   })
 }
 
@@ -44,7 +44,7 @@ resource "aws_subnet" "private_subnet" {
 resource "aws_internet_gateway" "igw" {
   vpc_id = aws_vpc.main.id
   tags = merge(var.tags, {
-    Name = "${local.project_name}-igw"
+    Name = "${local.project_name}-igw-${local.env}"
   })
 }
 
@@ -56,6 +56,9 @@ resource "aws_eip" "ngw_eip" {
   depends_on = [
     aws_internet_gateway.igw
   ]
+  tags = merge(var.tags, {
+    Name = "${local.project_name}-ngw-eip-${local.env}"
+  })
 }
 
 # NAT 게이트웨이 생성
@@ -64,7 +67,7 @@ resource "aws_nat_gateway" "ngw" {
   subnet_id     = aws_subnet.public_subnet[0].id # NAT가 배치될 서브넷 지정
 
   tags = merge(var.tags, {
-    Name = "${local.project_name}-ngw"
+    Name = "${local.project_name}-ngw-${local.env}"
   })
 }
 
@@ -79,7 +82,7 @@ resource "aws_route_table" "public_route_table" {
   }
 
   tags = merge(var.tags, {
-    Name = "${format("%s-rt-pub-%02d", local.project_name, count.index + 1)}"
+    Name = "${format("%s-rt-pub-%s-%02d", local.project_name, local.env, count.index + 1)}"
   })
 }
 
@@ -106,7 +109,7 @@ resource "aws_route_table" "private_route_table" {
   }
 
   tags = merge(var.tags, {
-    Name = "${format("%s-rt-pri-%02d", local.project_name, count.index + 1)}"
+    Name = "${format("%s-rt-pri-%s-%02d", local.project_name, local.env, count.index + 1)}"
   })
 }
 
