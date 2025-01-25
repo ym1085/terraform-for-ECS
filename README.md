@@ -47,14 +47,41 @@ terraform-for-ECS
 
 ## How to use this project?
 
+✅ Terraform 실행은 로컬에 Terraform이 설치되어 있다는 전제하에 진행됩니다.
+설치가 필요할 경우, 상단의 다운로드 페이지를 참고해주세요.
+
 ```shell
+# 루트 모듈 이동
 cd env/dev
 ```
 
+- [env/dev/terraform.tfvars](./env/dev/terraform.tfvars) 파일 확인
+- 해당 파일의 `aws_account`, `ecs_task_definitions.containers.image` 변수 값을 본인 AWS 계정의 account로 변경
+
 ```shell
+# terraform provider, 모듈, 기타 환경 초기화
 terraform init
+```
+
+```shell
+# terraform 포맷 체크
+terraform fmt
+
+# terraform 구문 유효성 검증
 terraform validate
-terraform plan
+```
+
+```shell
+# terraform plan
+terraform plan   
+var.ecs_container_image_version
+  ECS Container의 이미지 버전 <input image version>
+
+  Enter a value: <생성하고자 하는 ECS Task container의 이미지 버전 입력>
+```
+
+```shell
+# terraform 리소스 생성
 terraform apply
 ```
 
