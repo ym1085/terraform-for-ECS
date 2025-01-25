@@ -73,16 +73,15 @@ resource "aws_nat_gateway" "ngw" {
 
 # 퍼블릭 라우팅 테이블 생성 -> 2개의 zone(a, b)에 각각 생성
 resource "aws_route_table" "public_route_table" {
-  count = local.az_count
-
   vpc_id = aws_vpc.main.id
+
   route {
     cidr_block = "0.0.0.0/0"                 # VPC Public Subnet 내의 모든 요청(0.0.0.0/0)을 IGW로 라우팅
     gateway_id = aws_internet_gateway.igw.id # Internet Gateway 참조 설정
   }
 
   tags = merge(var.tags, {
-    Name = "${format("%s-rt-pub-%s-%02d", local.project_name, local.env, count.index + 1)}"
+    Name = "${local.project_name}-rt-pub-${local.env}"
   })
 }
 
@@ -91,7 +90,7 @@ resource "aws_route_table_association" "public_route_table_association" {
   count = local.az_count
 
   subnet_id      = aws_subnet.public_subnet[count.index].id
-  route_table_id = aws_route_table.public_route_table[count.index].id
+  route_table_id = aws_route_table.public_route_table.id
 
   depends_on = [
     aws_route_table.public_route_table
@@ -100,16 +99,15 @@ resource "aws_route_table_association" "public_route_table_association" {
 
 # 프라이빗 라우팅 테이블 생성 -> 2개의 zone(a, b)에 각각 생성
 resource "aws_route_table" "private_route_table" {
-  count = local.az_count
-
   vpc_id = aws_vpc.main.id
+
   route {
-    cidr_block = "0.0.0.0/0"            # VPC Private Subnet 대역의 모든 요청을 NAT로 라우팅
-    gateway_id = aws_nat_gateway.ngw.id # NAT Gateway 참조 설정
+    cidr_block     = "0.0.0.0/0"            # VPC Private Subnet 대역의 모든 요청을 NAT로 라우팅
+    nat_gateway_id = aws_nat_gateway.ngw.id # NAT Gateway 참조 설정
   }
 
   tags = merge(var.tags, {
-    Name = "${format("%s-rt-pri-%s-%02d", local.project_name, local.env, count.index + 1)}"
+    Name = "${local.project_name}-rt-pri-${local.env}"
   })
 }
 
@@ -118,7 +116,7 @@ resource "aws_route_table_association" "private_route_table_association" {
   count = local.az_count
 
   subnet_id      = aws_subnet.private_subnet[count.index].id
-  route_table_id = aws_route_table.private_route_table[count.index].id
+  route_table_id = aws_route_table.private_route_table.id
 
   depends_on = [
     aws_route_table.private_route_table
