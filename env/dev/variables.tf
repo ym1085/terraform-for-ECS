@@ -141,6 +141,7 @@ variable "alb_listener_rule" {
   type = map(object({
     type              = string
     path              = list(string)
+    alb_listener_name = string
     target_group_name = string
     priority          = number
   }))
@@ -249,9 +250,9 @@ variable "ecs_task_definitions" {
     env                                     = string
     ephemeral_storage                       = number
     containers = list(object({
-      name  = string
-      image = string
-      #version       = string
+      name          = string
+      image         = string
+      version       = string
       cpu           = number
       memory        = number
       port          = number
