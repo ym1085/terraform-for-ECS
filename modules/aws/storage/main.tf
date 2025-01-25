@@ -16,8 +16,7 @@ resource "aws_s3_bucket_versioning" "terraform_state" {
 
   bucket = aws_s3_bucket.terraform_state[each.key].id
   versioning_configuration {
-    status     = "Enabled" # 버전 관리 설정 - true
-    mfa_delete = "Enabled" # 객체 삭제 또는 버전 관리 비활성화를 시동할경우 MFA 토큰 입력 필요
+    status = "Enabled" # 버전 관리 설정 - true
   }
 }
 
