@@ -83,6 +83,7 @@ variable "alb_listener_rule" {
   type = map(object({
     type              = string
     path              = list(string)
+    alb_listener_name = string
     target_group_name = string
     priority          = number
   }))

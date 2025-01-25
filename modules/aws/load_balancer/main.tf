@@ -49,7 +49,7 @@ resource "aws_lb_listener" "alb_listener" {
 resource "aws_lb_listener_rule" "alb_listener_rule" {
   for_each = var.alb_listener_rule
 
-  listener_arn = aws_lb_listener.alb_listener[each.key].arn
+  listener_arn = aws_lb_listener.alb_listener[each.value.alb_listener_name].arn
   priority     = each.value.priority
 
   condition {
@@ -77,21 +77,21 @@ resource "aws_lb_listener_rule" "alb_listener_rule" {
 resource "aws_lb_target_group" "target_group" {
   for_each = var.target_group
 
-  vpc_id      = var.vpc_id                                                    # VPC ID 지정(외부 모듈 변수 or ??)
-  name        = "${each.value.target_group_name}-${each.value.env}"           # Target Group 이름 지정(원하는 이름 지정)
-  port        = each.value.target_group_port                                  # Target Group Port 지정
-  protocol    = each.value.target_group_target_type == "ALB" ? "HTTP" : "TCP" # Target Group 타입이 ALB면 HTTP, 아니면 TCP(NLB)
-  target_type = each.value.target_group_target_type                           # Target Group 타입 지정(IP, 인스턴스, ALB..)
+  vpc_id      = var.vpc_id                                                 # VPC ID 지정(외부 모듈 변수 or ??)
+  name        = "${each.value.target_group_name}-${each.value.env}"        # Target Group 이름 지정(원하는 이름 지정)
+  port        = each.value.target_group_port                               # Target Group Port 지정
+  protocol    = each.value.target_group_elb_type == "ALB" ? "HTTP" : "TCP" # Target Group 타입이 ALB면 HTTP, 아니면 TCP(NLB)
+  target_type = each.value.target_group_target_type                        # Target Group 타입 지정(IP, 인스턴스, ALB..)
 
   # Target Group health checking
   health_check {
-    enabled             = each.value.health_check.enabled                               # Health Check 옵션 활성화 여부
-    healthy_threshold   = each.value.health_check.healthy_threshold                     # 타겟 정상 상태 간주 Health Check 횟수
-    interval            = each.value.health_check.interval                              # Health Check 반복 횟수
-    port                = each.value.health_check.port                                  # Health Check를 수행할 타겟의 포트 번호.
-    protocol            = each.value.target_group_target_type == "ALB" ? "HTTP" : "TCP" # Health Check 요청 프로토콜
-    timeout             = each.value.health_check.timeout                               # Health Check 타임아웃 지정
-    unhealthy_threshold = each.value.health_check.unhealthy_threshold                   # 타겟이 비정상(Unhealthy) 상태로 간주되기 위해 연속적으로 실패해야 하는 Health Check 횟수.
+    enabled             = each.value.health_check.enabled             # Health Check 옵션 활성화 여부
+    healthy_threshold   = each.value.health_check.healthy_threshold   # 타겟 정상 상태 간주 Health Check 횟수
+    interval            = each.value.health_check.interval            # Health Check 반복 횟수
+    port                = each.value.health_check.port                # Health Check를 수행할 타겟의 포트 번호.
+    protocol            = each.value.health_check.protocol            # Health Check 요청 프로토콜
+    timeout             = each.value.health_check.timeout             # Health Check 타임아웃 지정
+    unhealthy_threshold = each.value.health_check.unhealthy_threshold # 타겟이 비정상(Unhealthy) 상태로 간주되기 위해 연속적으로 실패해야 하는 Health Check 횟수.
   }
 
   # Tag 지정
