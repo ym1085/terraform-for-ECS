@@ -26,10 +26,10 @@ resource "aws_ecs_cluster" "ecs_cluster" {
   for_each = var.ecs_cluster
   name     = "${each.value.cluster_name}-${each.value.env}" # core-search-cluster-stg
 
-  # Terraform 삭제 방지
-  # lifecycle {
-  #   prevent_destroy = true
-  # }
+  lifecycle {
+    # prevent_destroy = true
+    create_before_destroy = true
+  }
 
   tags = merge(var.tags, {
     Name = "${each.value.cluster_name}-${each.value.env}"
@@ -84,57 +84,59 @@ resource "aws_ecs_task_definition" "ecs_task_definition" {
 }
 
 # ECS 서비스
-# resource "aws_ecs_service" "ecs_service" {
-#   for_each = var.ecs_service
+resource "aws_ecs_service" "ecs_service" {
+  # ECS 서비스의 경우.. 우선 기본적으로 생성하지 않는다
+  for_each = local.create_ecs_service ? var.ecs_service : {}
 
-#   launch_type                       = each.value.launch_type
-#   iam_role                          = each.value.service_role                                                      # IAM Role
-#   cluster                           = "${each.value.cluster_name}-${each.value.env}"                               # ECS 클러스터 이름
-#   name                              = "${each.value.service_name}-${each.value.env}"                               # ECS 서비스 이름
-#   desired_count                     = each.value.desired_count                                                     # 원하는 태스크 개수
-#   health_check_grace_period_seconds = each.value.health_check_grace_period_sec                                     # 헬스 체크 그레이스 기간
-#   task_definition                   = aws_ecs_task_definition.ecs_task_definition[each.value.task_definitions].arn # Task Definition ARN
+  launch_type                       = each.value.launch_type
+  iam_role                          = each.value.service_role                                                      # IAM Role
+  cluster                           = "${each.value.cluster_name}-${each.value.env}"                               # ECS 클러스터 이름
+  name                              = "${each.value.service_name}-${each.value.env}"                               # ECS 서비스 이름
+  desired_count                     = each.value.desired_count                                                     # 원하는 태스크 개수
+  health_check_grace_period_seconds = each.value.health_check_grace_period_sec                                     # 헬스 체크 그레이스 기간
+  task_definition                   = aws_ecs_task_definition.ecs_task_definition[each.value.task_definitions].arn # Task Definition ARN
 
-#   # 네트워크 구성 (Private Subnet 사용)
-#   network_configuration {
-#     subnets          = var.private_subnet_ids # subnet-xxxx, subnet-xxxx, subnet-xxxx
-#     security_groups  = [aws_security_group.ecs_security_group.id]
-#     assign_public_ip = each.value.assign_public_ip
-#   }
+  # 네트워크 구성 (Private Subnet 사용)
+  network_configuration {
+    subnets          = var.private_subnet_ids # subnet-xxxx, subnet-xxxx, subnet-xxxx
+    security_groups  = [aws_security_group.ecs_security_group.id]
+    assign_public_ip = each.value.assign_public_ip
+  }
 
-#   # ALB와 연동된 Load Balancer 설정
-#   load_balancer {
-#     target_group_arn = lookup(var.alb_tg_arn, each.key, null)
-#     container_name   = each.value.container_name
-#     container_port   = each.value.container_port
-#   }
+  # ALB와 연동된 Load Balancer 설정
+  load_balancer {
+    target_group_arn = lookup(var.alb_tg_arn, each.key, null)
+    container_name   = each.value.container_name
+    container_port   = each.value.container_port
+  }
 
-#   # 배포 회로 차단기 및 롤백
-#   deployment_circuit_breaker {
-#     enable   = true
-#     rollback = true
-#   }
+  # 배포 회로 차단기 및 롤백
+  deployment_circuit_breaker {
+    enable   = true
+    rollback = true
+  }
 
-#   # 배포 컨트롤러 설정
-#   deployment_controller {
-#     type = each.value.deployment_controller
-#   }
+  # 배포 컨트롤러 설정
+  deployment_controller {
+    type = each.value.deployment_controller
+  }
 
-#   # Terraform 삭제 방지
-#   # lifecycle {
-#   #   prevent_destroy = true
-#   # }
+  lifecycle {
+    # prevent_destroy = true # Terraform 리소스 삭제 방지
+    create_before_destroy = true # 리소스 삭제 되기 전 생성 후 삭제 진행
+  }
 
-#   # ECS Service는 Cluster, TD가 생성된 이후에 생성 되어야 함
-#   depends_on = [
-#     aws_ecs_cluster.ecs_cluster,
-#     aws_ecs_task_definition.ecs_task_definition
-#   ]
+  # ECS Service는 Cluster, TD, 보안그룹이 생성된 이후에 생성 되어야 함
+  depends_on = [
+    aws_ecs_cluster.ecs_cluster,
+    aws_ecs_task_definition.ecs_task_definition,
+    aws_security_group.ecs_security_group
+  ]
 
-#   tags = merge(var.tags, {
-#     Name = "${each.value.service_name}-${each.value.env}"
-#   })
-# }
+  tags = merge(var.tags, {
+    Name = "${each.value.service_name}-${each.value.env}"
+  })
+}
 
 # ECS Service에 Attachment 되는 보안그룹 생성
 resource "aws_security_group" "ecs_security_group" {
@@ -142,10 +144,8 @@ resource "aws_security_group" "ecs_security_group" {
   description = "Allow ECS Task inbound traffic and outbound traffic"
   vpc_id      = var.vpc_id # 보안그룹을 생성할 VPC 위치 지정
 
-  # 보안 그룹은 기본적으로 삭제 -> 생성 순서로 이어진다
-  # 그렇기에 Life Cycle을 지정해준다
   lifecycle {
-    create_before_destroy = true
+    create_before_destroy = true # 리소스 삭제 되기 전 생성 후 삭제 진행
   }
 
   tags = merge(var.tags, {
@@ -166,4 +166,8 @@ resource "aws_security_group_rule" "ecs_ingress_security_group" {
   # 조건적으로 참조된 보안 그룹 또는 CIDR 블록 사용
   source_security_group_id = try(each.value.referenced_security_group_id, null)
   cidr_blocks              = try([each.value.cidr_ipv4], null)
+
+  lifecycle {
+    create_before_destroy = true
+  }
 }
