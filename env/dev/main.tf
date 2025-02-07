@@ -59,10 +59,12 @@ module "security" {
   source = "../../modules/aws/security"
 
   # ECS IAM 관련 설정
-  ecs_task_role             = var.ecs_task_role
-  ecs_task_role_policy      = var.ecs_task_role_policy
-  ecs_task_exec_role        = var.ecs_task_exec_role
-  ecs_task_exec_role_policy = var.ecs_task_exec_role_policy
+  ecs_task_role               = var.ecs_task_role
+  ecs_task_role_policy        = var.ecs_task_role_policy
+  ecs_task_exec_role          = var.ecs_task_exec_role
+  ecs_task_exec_role_policy   = var.ecs_task_exec_role_policy
+  ecs_auto_scaling_role       = var.ecs_auto_scaling_role
+  ecs_auto_scaling_policy_arn = var.ecs_auto_scaling_policy_arn
 }
 
 module "compute" {

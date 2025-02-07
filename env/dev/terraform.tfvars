@@ -166,10 +166,12 @@ ecs_cluster = {
 ecs_security_group = "core-search-ecs-sg"
 
 # ECS IAM Role
-ecs_task_role             = "ecs_task_role"
-ecs_task_role_policy      = "custom_ecs_task_role_policy"
-ecs_task_exec_role        = "ecs_task_exec_role"
-ecs_task_exec_role_policy = "custom_ecs_task_exec_role_policy"
+ecs_task_role               = "ecs_task_role"
+ecs_task_role_policy        = "custom_ecs_task_role_policy"
+ecs_task_exec_role          = "ecs_task_exec_role"
+ecs_task_exec_role_policy   = "custom_ecs_task_exec_role_policy"
+ecs_auto_scaling_role       = "ecs_auto_scaling_role"
+ecs_auto_scaling_policy_arn = "AmazonEC2ContainerServiceAutoscaleRole" # 기존에 생성되어 있는 정책을 참조
 
 # ECS Container Image 버전
 # ecs_container_image_version = ""

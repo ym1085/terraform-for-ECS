@@ -89,3 +89,27 @@ resource "aws_iam_role_policy_attachment" "ecs_task_exec_role_policy" {
   role       = aws_iam_role.ecs_task_exec_role.name
   policy_arn = aws_iam_policy.ecs_task_exec_role_policy.arn
 }
+
+# ECS AutoScaling 관련 IAM Role 생성
+resource "aws_iam_role" "ecs_auto_scaling_role" {
+  name = var.ecs_auto_scaling_role
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "AutoScaling"
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "application-autoscaling.amazonaws.com"
+        }
+      }
+    ]
+  })
+}
+
+# ECS AutoScaling Role에 Auto Scaling 관련 Policy(정책) 연결
+resource "aws_iam_role_policy_attachment" "ecs_auto_scaling_role_policy_attachment" {
+  role       = aws_iam_role.ecs_auto_scaling_role
+  policy_arn = "arn:aws:iam::aws:policy/service-role/${var.ecs_auto_scaling_policy_arn}"
+}
