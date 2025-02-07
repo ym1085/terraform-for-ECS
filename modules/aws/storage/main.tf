@@ -42,3 +42,16 @@ resource "aws_s3_bucket_public_access_block" "terraform_state" {
   ignore_public_acls      = true
   restrict_public_buckets = true
 }
+
+# DynamoDB for terraform state locking
+# TODO: dynamo DB 테이블도 환경별로 분리
+resource "aws_dynamodb_table" "terraform_state_lock" {
+  name         = "tfstate-lock"  # DynamoDB Table명 지정
+  hash_key     = "LockID"          # DynamoDB의 Hash Key 이름 지정
+  billing_mode = "PAY_PER_REQUEST" # 비용 관련 설정(사용한 만큼만 과금)
+
+  attribute {
+    name = "LockID" # 해시 키(Primary Key)로 사용할 컬럼 지정
+    type = "S"      # 데이터 타입을 'S'(String)로 지정
+  }
+}
