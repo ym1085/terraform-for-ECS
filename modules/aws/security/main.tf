@@ -109,7 +109,8 @@ resource "aws_iam_role" "ecs_auto_scaling_role" {
 }
 
 # ECS AutoScaling Role에 Auto Scaling 관련 Policy(정책) 연결
+# Policy: AmazonEC2ContainerServiceAutoscaleRole
 resource "aws_iam_role_policy_attachment" "ecs_auto_scaling_role_policy_attachment" {
-  role       = aws_iam_role.ecs_auto_scaling_role
+  role       = aws_iam_role.ecs_auto_scaling_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/${var.ecs_auto_scaling_policy_arn}"
 }
