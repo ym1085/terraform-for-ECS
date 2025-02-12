@@ -81,6 +81,7 @@ module "compute" {
   ecs_cluster                 = var.ecs_cluster
   ecs_task_definitions        = var.ecs_task_definitions
   ecs_service                 = var.ecs_service
+  ecs_appautoscaling_target   = var.ecs_appautoscaling_target
   ecs_task_role_arn           = module.security.ecs_task_role_arn      # task role arn
   ecs_task_exec_role_arn      = module.security.ecs_task_exec_role_arn # task exec role arn
   ecs_security_group          = var.ecs_security_group                 # ECS Service 보안그룹 지정

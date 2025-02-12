@@ -145,15 +145,20 @@ resource "aws_appautoscaling_target" "ecs_target" {
   # TODO: ECS Service는 기본적으로 생성하지 않음, 그리고 AG 관련 설정도 ECS Service 변수에서 받아와서 사용 필요
   for_each = local.create_ecs_service ? var.ecs_service : {}
 
-  min_capacity       = 2                                 # 최소 Task 2개가 항상 실행되도록 설정
-  max_capacity       = 6                                 # 최대 Task 6개까지 증가 할 수 있도록 설정
-  resource_id        = "service/clusterName/serviceName" # AG를 적용할 대상 리소스 지정, 여기서는 ECS 서비스 ARN 형식의 일부 기재
-  scalable_dimension = "ecs:service:DesiredCount"        # 조정할 수 있는 AWS 리소스의 특정 속성을 지정하는 필드
-  service_namespace  = "ecs"
+  min_capacity       = each.value.min_capacity       # 최소 Task 2개가 항상 실행되도록 설정
+  max_capacity       = each.value.max_capacity       # 최대 Task 6개까지 증가 할 수 있도록 설정
+  resource_id        = each.value.resource_id        # AG를 적용할 대상 리소스 지정, 여기서는 ECS 서비스 ARN 형식의 일부 기재
+  scalable_dimension = each.value.scalable_dimension # 조정할 수 있는 AWS 리소스의 특정 속성을 지정하는 필드
+  service_namespace  = each.value.service_namespace  # ECS namespace 지정
 
   depends_on = [
     aws_ecs_service.ecs_service
   ]
+}
+
+# ECS AutoScaling Policy
+resource "aws_appautoscaling_policy" "ecs_policy_scale_out" {
+  name = 
 }
 
 # ECS Service에 Attachment 되는 보안그룹 생성

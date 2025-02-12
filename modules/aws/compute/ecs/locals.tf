@@ -4,7 +4,7 @@ locals {
   az_count     = length(var.availability_zones) # 가용영역 개수
 
   # ECS Service 생성 여부(true: 생성, false: 생성 x)
-  create_ecs_service = false
+  create_ecs_service = true
 
   # ECS 보안그룹 관련 변수 지정
   ecs_security_group_rules = {

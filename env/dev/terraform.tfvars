@@ -250,9 +250,23 @@ ecs_service = {
     container_name                = "core-search-api-server-stg", # 컨테이너 이름
     container_port                = 8080,                         # 컨테이너 포트
     task_definitions              = "core-search-td"              # 테스크 지정
-    env                           = "stg"
-    health_check_grace_period_sec = 120  # 헬스 체크 그레이스 기간
-    assign_public_ip              = true # 우선 public zone에 구성
+    env                           = "stg"                         # ECS Service 환경변수
+    health_check_grace_period_sec = 120                           # 헬스 체크 그레이스 기간
+    assign_public_ip              = true                          # 우선 public zone에 구성
+  },
+}
+
+ecs_appautoscaling_target = {
+  "core-search-service" = {
+    min_capacity          = 2                                 # 최소 Task 2개가 항상 실행되도록 설정
+    max_capacity          = 6                                 # 최대 Task 6개까지 증가 할 수 있도록 설정
+    resource_id           = "service/clusterName/serviceName" # AG를 적용할 대상 리소스 지정, 여기서는 ECS 서비스 ARN 형식의 일부 기재
+    scalable_dimension    = "ecs:service:DesiredCount"        # 조정할 수 있는 AWS 리소스의 특정 속성을 지정하는 필드
+    service_namespace     = "ecs"
+    scale_out_policy_name = "core-search-service-scaleout-policy" # ScaleOut AG 정책 이름 명시
+    scale_in_policy_name  = "core-search-service-scale-in-policy" # ScaleIn AG 정책 이름 명시
+    cluster_name          = "core-search-cluster"                 # ECS 클러스터명 지정
+    service_name          = "core-search-service"                 # ECS 서비스명 지정
   },
 }
 
