@@ -256,6 +256,7 @@ ecs_service = {
   },
 }
 
+# ECS Autoscaling
 ecs_appautoscaling_target = {
   "core-search-service" = {
     min_capacity          = 2                                 # 최소 Task 2개가 항상 실행되도록 설정
@@ -268,6 +269,21 @@ ecs_appautoscaling_target = {
     cluster_name          = "core-search-cluster"                 # ECS 클러스터명 지정
     service_name          = "core-search-service"                 # ECS 서비스명 지정
   },
+}
+
+# ECS Autoscaling 정책
+ecs_appautoscaling_target_policy = {
+  "core-search-service" = {
+    scale_out = {
+      name                        = "core-search-service-scaleout-policy" # 스케일 아웃 정책명
+      policy_type                 = "StepScaling"                         # 정책 타입
+      adjustment_type             = "PercentChangeInCapacity"             # 조정 방식 (퍼센트 증가)
+      cooldown                    = 60                                    # Autoscaling 이벤트 후 다음 이벤트까지 대기 시간(60초)
+      metric_aggregation_type     = "Average"                             # 측정 지표의 집계 방식 (AVG: 평균)
+      metric_interval_lower_bound = 30                                    # 트리거 조건의 최소 임계값(30%)
+      scaling_adjustment          = 50                                    # 조정 비율 (50% ECS Task 증가)
+    },
+  }
 }
 
 ################

@@ -143,7 +143,7 @@ resource "aws_ecs_service" "ecs_service" {
 # arn:aws:ecs:ap-northeast-2:7xxxxxxxxxx:service/search-xxxx-cluster-prod/search-xxxx-service-nlb-prod
 resource "aws_appautoscaling_target" "ecs_target" {
   # TODO: ECS Service는 기본적으로 생성하지 않음, 그리고 AG 관련 설정도 ECS Service 변수에서 받아와서 사용 필요
-  for_each = local.create_ecs_service ? var.ecs_service : {}
+  for_each = local.create_ecs_service ? var.ecs_appautoscaling_target : {}
 
   min_capacity       = each.value.min_capacity       # 최소 Task 2개가 항상 실행되도록 설정
   max_capacity       = each.value.max_capacity       # 최대 Task 6개까지 증가 할 수 있도록 설정
@@ -156,10 +156,33 @@ resource "aws_appautoscaling_target" "ecs_target" {
   ]
 }
 
-# ECS AutoScaling Policy
+# ECS AutoScaling Policy - Scale Out
 resource "aws_appautoscaling_policy" "ecs_policy_scale_out" {
-  name = 
+  for_each = local.create_ecs_service ? var.ecs_appautoscaling_target_policy : {}
+
+  name               = each.value.scale_out.name                                                         # AutoScaling 정책 이름
+  policy_type        = each.value.scale_out.policy_type                                                  # AutoScaling 정책 타입(How to scale out?)
+  resource_id        = aws_appautoscaling_target.ecs_target[each.value.scale_out.key].resource_id        # AutoScaling이 적용될 ECS 서비스 ID
+  scalable_dimension = aws_appautoscaling_target.ecs_target[each.value.scale_out.key].scalable_dimension # AutoScaling이 적용될 리소스의 스케일링 속성(ecs:service:DesiredCount)
+  service_namespace  = aws_appautoscaling_target.ecs_target[each.value.scale_out.key].service_namespace  # AWS 서비스 네임스페이스 (ecs, dynamodb, sagemaker 등)
+
+  step_scaling_policy_configuration {
+    adjustment_type         = each.value.scale_out.adjustment_type         # AutoScaling 조정 방식(PercentChangeInCapacity)
+    cooldown                = each.value.scale_out.cooldown                # Auto Scaling 이벤트 후 다음 이벤트까지 대기 시간 (초)
+    metric_aggregation_type = each.value.scale_out.metric_aggregation_type # 측정 지표의 집계 방식 (Average 등)
+
+    step_adjustment {
+      metric_interval_lower_bound = each.value.scale_out.metric_interval_lower_bound # 스케일링이 적용되는 최소 임계값
+      scaling_adjustment          = each.value.scale_out.scaling_adjustment          # 조정 비율 (예: 50 → 50% 증가)
+    }
+  }
 }
+
+# ECS ScaleOut - CPU Base
+# resource "aws_cloudwatch_metric_alarm" "ecs_cpu_scale_out_alert" {
+#   // TODO: ECS ScaleOut CPU 알람 생성 및 설정
+#   alarm_name = 
+# }
 
 # ECS Service에 Attachment 되는 보안그룹 생성
 resource "aws_security_group" "ecs_security_group" {

@@ -195,6 +195,22 @@ variable "ecs_appautoscaling_target" {
   }))
 }
 
+# ECS Auto Scaling policy
+variable "ecs_appautoscaling_target_policy" {
+  description = "ECS Auto Scaling Target Policy 설정"
+  type = map(object({
+    scale_out = map(object({
+      name                        = string
+      policy_type                 = string
+      adjustment_type             = string
+      cooldown                    = number
+      metric_aggregation_type     = string
+      metric_interval_lower_bound = number
+      scaling_adjustment          = number
+    }))
+  }))
+}
+
 ####################
 # 로드밸런서 설정
 ####################
