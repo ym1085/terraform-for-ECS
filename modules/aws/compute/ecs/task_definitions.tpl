@@ -1,8 +1,8 @@
 [
   %{ for container in jsondecode(containers) }
   {
-    "name": "${container.name}",
-    "image": "${container.image}:${ecs_container_image_version}",
+    "name": "${container.name}-${container.env}",
+    "image": "${container.image}:${ecs_container_image_version}-${container.env}",
     "cpu": ${container.cpu},
     "memory": ${container.memory},
     "essential": ${container.essential},

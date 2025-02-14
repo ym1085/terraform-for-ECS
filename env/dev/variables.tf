@@ -279,6 +279,7 @@ variable "ecs_task_definitions" {
         timeout  = number
         retries  = number
       })
+      env = string
     }))
   }))
 }
@@ -299,6 +300,7 @@ variable "ecs_service" {
     assign_public_ip              = bool   # 퍼블릭 IP 지정 여부
     deployment_controller         = string
     launch_type                   = string # ECS Launch Type ( EC2 or Fargate )
+    target_group_arn              = string
   }))
 }
 
@@ -322,15 +324,40 @@ variable "ecs_appautoscaling_target" {
 variable "ecs_appautoscaling_target_policy" {
   description = "ECS Auto Scaling Target Policy 설정"
   type = map(object({
-    scale_out = map(object({
-      name                        = string
-      policy_type                 = string
-      adjustment_type             = string
-      cooldown                    = number
-      metric_aggregation_type     = string
-      metric_interval_lower_bound = number
-      scaling_adjustment          = number
-    }))
+    scale_out = object({
+      name        = string
+      policy_type = string
+      step_scaling_policy_conf = object({
+        adjustment_type         = string
+        cooldown                = number
+        metric_aggregation_type = string
+        step_adjustment = map(object({
+          metric_interval_lower_bound = number
+          metric_interval_upper_bound = optional(number)
+          scaling_adjustment          = number
+        }))
+      })
+    })
+  }))
+}
+
+# ECS CPU Scale Out Alert
+variable "ecs_cpu_scale_out_alert" {
+  description = "ECS CPU Scale Out Alert Policy"
+  type = map(object({
+    alarm_name          = string
+    comparison_operator = string
+    evaluation_periods  = string
+    metric_name         = string
+    namespace           = string
+    period              = string
+    statistic           = string
+    threshold           = string
+    dimensions = object({
+      cluster_name = string
+      service_name = string
+    })
+    env = string
   }))
 }
 
