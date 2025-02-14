@@ -59,10 +59,12 @@ module "security" {
   source = "../../modules/aws/security"
 
   # ECS IAM 관련 설정
-  ecs_task_role             = var.ecs_task_role
-  ecs_task_role_policy      = var.ecs_task_role_policy
-  ecs_task_exec_role        = var.ecs_task_exec_role
-  ecs_task_exec_role_policy = var.ecs_task_exec_role_policy
+  ecs_task_role               = var.ecs_task_role
+  ecs_task_role_policy        = var.ecs_task_role_policy
+  ecs_task_exec_role          = var.ecs_task_exec_role
+  ecs_task_exec_role_policy   = var.ecs_task_exec_role_policy
+  ecs_auto_scaling_role       = var.ecs_auto_scaling_role
+  ecs_auto_scaling_policy_arn = var.ecs_auto_scaling_policy_arn
 }
 
 module "compute" {
@@ -76,9 +78,14 @@ module "compute" {
   private_subnet_ids   = module.network.private_subnet_ids # Network의 output 변수 사용
 
   # ECS 관련 설정
-  ecs_cluster                 = var.ecs_cluster
-  ecs_task_definitions        = var.ecs_task_definitions
-  ecs_service                 = var.ecs_service
+  ecs_cluster                      = var.ecs_cluster                      # ECS Cluster 설정
+  ecs_task_definitions             = var.ecs_task_definitions             # ECS Task 설정
+  ecs_service                      = var.ecs_service                      # ECS Service 설정
+  ecs_appautoscaling_target        = var.ecs_appautoscaling_target        # ECS Automoscaling target
+  ecs_appautoscaling_target_policy = var.ecs_appautoscaling_target_policy # ECS Automatic scaling Policy
+  ecs_cpu_scale_out_alert          = var.ecs_cpu_scale_out_alert          # ECS AutoScaling Alert
+
+  # ECS IAM 권한 설정
   ecs_task_role_arn           = module.security.ecs_task_role_arn      # task role arn
   ecs_task_exec_role_arn      = module.security.ecs_task_exec_role_arn # task exec role arn
   ecs_security_group          = var.ecs_security_group                 # ECS Service 보안그룹 지정

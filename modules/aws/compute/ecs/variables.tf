@@ -156,16 +156,17 @@ variable "ecs_task_definitions" {
         timeout  = number
         retries  = number
       })
+      env = string
     }))
   }))
 }
 
 # ECS Service
 variable "ecs_service" {
-  description = "AWS ECS 서비스 목록"
+  description = "ECS 서비스 설정"
   type = map(object({
     service_role                  = string # ECS Service Role
-    cluster_name                  = string # ECS Cluster Name
+    cluster_name                  = string
     service_name                  = string # ECS 서비스 도메인명
     desired_count                 = number # ECS 서비스 Task 개수
     container_name                = string # ECS Container Name
@@ -175,7 +176,65 @@ variable "ecs_service" {
     health_check_grace_period_sec = number # 헬스 체크 그레이스 기간
     assign_public_ip              = bool   # 퍼블릭 IP 지정 여부
     deployment_controller         = string
-    launch_type                   = string
+    launch_type                   = string # ECS Launch Type ( EC2 or Fargate )
+    target_group_arn              = string
+  }))
+}
+
+# ECS Auto Scaling 시 사용하는 변수
+variable "ecs_appautoscaling_target" {
+  description = "ECS Auto Scaling Target 설정"
+  type = map(object({
+    min_capacity          = number # 최소 Task 2개가 항상 실행되도록 설정
+    max_capacity          = number # 최대 Task 6개까지 증가 할 수 있도록 설정
+    resource_id           = string # AG를 적용할 대상 리소스 지정, 여기서는 ECS 서비스 ARN 형식의 일부 기재
+    scalable_dimension    = string # 조정할 수 있는 AWS 리소스의 특정 속성을 지정하는 필드
+    service_namespace     = string
+    scale_out_policy_name = string
+    scale_in_policy_name  = string
+    cluster_name          = string # AG가 어떤 ecs cluster에 매핑되는지 ecs cluster의 이름 지정
+    service_name          = string # AG가 어떤 ecs service에 매핑되는지 ecs service의 이름 지정
+  }))
+}
+
+# ECS Auto Scaling policy
+variable "ecs_appautoscaling_target_policy" {
+  description = "ECS Auto Scaling Target Policy 설정"
+  type = map(object({
+    scale_out = object({
+      name        = string
+      policy_type = string
+      step_scaling_policy_conf = object({
+        adjustment_type         = string
+        cooldown                = number
+        metric_aggregation_type = string
+        step_adjustment = map(object({
+          metric_interval_lower_bound = number
+          metric_interval_upper_bound = optional(number)
+          scaling_adjustment          = number
+        }))
+      })
+    })
+  }))
+}
+
+# ECS CPU Scale Out Alert
+variable "ecs_cpu_scale_out_alert" {
+  description = "ECS CPU Scale Out Alert Policy"
+  type = map(object({
+    alarm_name          = string
+    comparison_operator = string
+    evaluation_periods  = string
+    metric_name         = string
+    namespace           = string
+    period              = string
+    statistic           = string
+    threshold           = string
+    dimensions = object({
+      cluster_name = string
+      service_name = string
+    })
+    env = string
   }))
 }
 

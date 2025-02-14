@@ -88,8 +88,8 @@ resource "aws_ecs_service" "ecs_service" {
   # ECS 서비스의 경우.. 우선 기본적으로 생성하지 않는다
   for_each = local.create_ecs_service ? var.ecs_service : {}
 
-  launch_type                       = each.value.launch_type
-  iam_role                          = each.value.service_role                                                      # IAM Role
+  launch_type = each.value.launch_type
+  # iam_role                          = each.value.service_role                                                      # IAM Role
   cluster                           = "${each.value.cluster_name}-${each.value.env}"                               # ECS 클러스터 이름
   name                              = "${each.value.service_name}-${each.value.env}"                               # ECS 서비스 이름
   desired_count                     = each.value.desired_count                                                     # 원하는 태스크 개수
@@ -105,8 +105,8 @@ resource "aws_ecs_service" "ecs_service" {
 
   # ALB와 연동된 Load Balancer 설정
   load_balancer {
-    target_group_arn = lookup(var.alb_tg_arn, each.key, null)
-    container_name   = each.value.container_name
+    target_group_arn = lookup(var.alb_tg_arn, each.value.target_group_arn, null)
+    container_name   = "${each.value.container_name}-${each.value.env}"
     container_port   = each.value.container_port
   }
 
@@ -135,6 +135,81 @@ resource "aws_ecs_service" "ecs_service" {
 
   tags = merge(var.tags, {
     Name = "${each.value.service_name}-${each.value.env}"
+  })
+}
+
+# ECS Autoscaling을 위한 aws_appautoscaling_target 작성
+# https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/appautoscaling_target.html
+# arn:aws:ecs:ap-northeast-2:7xxxxxxxxxx:service/search-xxxx-cluster-prod/search-xxxx-service-nlb-prod
+resource "aws_appautoscaling_target" "ecs_target" {
+  # TODO: ECS Service는 기본적으로 생성하지 않음, 그리고 AG 관련 설정도 ECS Service 변수에서 받아와서 사용 필요
+  for_each = local.create_ecs_service ? var.ecs_appautoscaling_target : {}
+
+  min_capacity       = each.value.min_capacity       # 최소 Task 2개가 항상 실행되도록 설정
+  max_capacity       = each.value.max_capacity       # 최대 Task 6개까지 증가 할 수 있도록 설정
+  resource_id        = each.value.resource_id        # AG를 적용할 대상 리소스 지정, 여기서는 ECS 서비스 ARN 형식의 일부 기재
+  scalable_dimension = each.value.scalable_dimension # 조정할 수 있는 AWS 리소스의 특정 속성을 지정하는 필드
+  service_namespace  = each.value.service_namespace  # ECS namespace 지정
+
+  depends_on = [
+    aws_ecs_service.ecs_service
+  ]
+}
+
+# ECS AutoScaling Policy - Scale Out
+resource "aws_appautoscaling_policy" "ecs_policy_scale_out" {
+  for_each = local.create_ecs_service ? var.ecs_appautoscaling_target_policy : {}
+
+  name               = each.value.scale_out.name                                         # AutoScaling 정책 이름
+  policy_type        = each.value.scale_out.policy_type                                  # AutoScaling 정책 타입(How to scale out?)
+  resource_id        = aws_appautoscaling_target.ecs_target[each.key].resource_id        # AutoScaling이 적용될 ECS 서비스 ID
+  scalable_dimension = aws_appautoscaling_target.ecs_target[each.key].scalable_dimension # AutoScaling이 적용될 리소스의 스케일링 속성(ecs:service:DesiredCount)
+  service_namespace  = aws_appautoscaling_target.ecs_target[each.key].service_namespace  # AWS 서비스 네임스페이스 (ecs, dynamodb, sagemaker 등)
+
+  step_scaling_policy_configuration {
+    adjustment_type         = each.value.scale_out.step_scaling_policy_conf.adjustment_type         # AutoScaling 조정 방식(PercentChangeInCapacity)
+    cooldown                = each.value.scale_out.step_scaling_policy_conf.cooldown                # Auto Scaling 이벤트 후 다음 이벤트까지 대기 시간 (초)
+    metric_aggregation_type = each.value.scale_out.step_scaling_policy_conf.metric_aggregation_type # 측정 지표의 집계 방식 (Average 등)
+
+    dynamic "step_adjustment" {
+      for_each = each.value.scale_out.step_scaling_policy_conf.step_adjustment
+
+      content {
+        metric_interval_lower_bound = step_adjustment.value.metric_interval_lower_bound
+        metric_interval_upper_bound = step_adjustment.value.metric_interval_upper_bound
+        scaling_adjustment          = step_adjustment.value.scaling_adjustment
+      }
+    }
+  }
+}
+
+# ECS ScaleOut - CPU Base
+resource "aws_cloudwatch_metric_alarm" "ecs_cpu_scale_out_alert" {
+  for_each = local.create_ecs_service ? var.ecs_cpu_scale_out_alert : {}
+
+  // TODO: ECS ScaleOut CPU 알람 생성 및 설정
+  alarm_name          = each.value.alarm_name          # Cloudwatch 알람 이름
+  comparison_operator = each.value.comparison_operator # 메트릭 값과 임계값 비교할 때 사용할 연산자 지정(GreaterThanThreshold, LessThanThreshold)
+  evaluation_periods  = each.value.evaluation_periods  # 평가 기간(1)
+  metric_name         = each.value.metric_name         # 메트릭 이름 지정 -> CPUUtilization
+  namespace           = each.value.namespace           # 메트릭이 속한 네임스페이스 지정
+  period              = each.value.period              # 메트릭 데이터 집계 간격(초) 지정
+  statistic           = each.value.statistic           # 메트릭 통계 방식 지정(Average, Sum)
+  threshold           = each.value.threshold           # 알람 발동을 위한 임계값 지정
+
+  dimensions = {
+    ClusterName = aws_ecs_cluster.ecs_cluster[each.value.dimensions.cluster_name].name
+    ServiceName = aws_ecs_service.ecs_service[each.value.dimensions.service_name].name
+  }
+
+  # TODO: Slack 있으면 SNS 사용해서 연동 해주어도 될 듯
+  # 알람 발동 시 어떤 정책을 사용할지 연결
+  alarm_actions = [
+    aws_appautoscaling_policy.ecs_policy_scale_out[each.key].arn
+  ]
+
+  tags = merge(var.tags, {
+    Name = "${each.value.alarm_name}-${each.value.env}"
   })
 }
 
