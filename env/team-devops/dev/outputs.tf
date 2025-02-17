@@ -73,6 +73,19 @@ output "debug_compute_module" {
   sensitive = true
 }
 
+output "debug_ec2" {
+  description = "ec2 모듈 변수 확인"
+  value = {
+    vpc_id = module.network.vpc_id
+
+    ec2_security_group       = var.ec2_security_group
+    ec2_security_group_rules = var.ec2_security_group_rules
+
+    env  = var.env
+    tags = var.tags
+  }
+}
+
 output "debug_storage_module" {
   description = "storage 모듈 변수 확인"
   value = {

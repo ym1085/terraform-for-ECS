@@ -8,34 +8,36 @@ AWSTemplateFormatVersion: "2010-09-09"
 Metadata:
   AWS::CloudFormation::Interface:
     ParameterGroups:
-      - Label:
-          default: "<<<<< Deploy EC2 >>>>>" # EC2 서버 설정
-        Parameters:
-          - KeyName # EC2에 사용할 SSH 키 이름
-          - SgIngressSshCidr # SSH 접근을 허용할 CIDR 블록
-          - MyInstanceType # 인스턴스 타입(ex: t3.micro)
-          - LatestAmiId # 사용할 최신 AMI ID
+    - Label:
+        default: "<<<<< Deploy EC2 >>>>>" # EC2 서버 설정
+      Parameters:
+      - KeyName # EC2에 사용할 SSH 키 이름
+      - SgIngressSshCidr # SSH 접근을 허용할 CIDR 블록
+      - MyInstanceType # 인스턴스 타입(ex: t3.micro)
+      - LatestAmiId # 사용할 최신 AMI ID
 
-      - Label:
-          default: "<<<<< Region AZ >>>>>" # AWS Region 설정
-        Parameters:
-          - TargetRegion # 배포할 AWS 리전
-          - AvailabilityZone1 # 첫 번째 가용 영역(AZ)
-          - AvailabilityZone2 # 두 번째 가용 영역(AZ)
+    - Label:
+        default: "<<<<< Region AZ >>>>>" # AWS Region 설정
+      Parameters:
+      - TargetRegion # 배포할 AWS 리전
+      - AvailabilityZone1 # 첫 번째 가용 영역(AZ)
+      - AvailabilityZone2 # 두 번째 가용 영역(AZ)
 
-      - Label:
-          default: "<<<<< VPC Subnet >>>>>" # VPC 관련 설정
-        Parameters:
-          - VpcBlock # VPC CIDR Block 지정
-          - PublicSubnet1Block # 첫 번째 Public Subnet 지정
-          - PublicSubnet2Block # 두 번째 Public Subnet 지정 (TODO: 필요한가?)
+    - Label:
+        default: "<<<<< VPC Subnet >>>>>" # VPC 관련 설정
+      Parameters:
+      - VpcBlock # VPC CIDR Block 지정
+      - PublicSubnet1Block # 첫 번째 Public Subnet 지정
+      - PublicSubnet2Block # 두 번째 Public Subnet 지정 (TODO: 필요한가?)
 
 Parameters:
-  KeyName: # EC2에 사용할 SSH 키 이름
+  KeyName:
+    # EC2에 사용할 SSH 키 이름
     Description: Name of an existing EC2 KeyPair to enable SSH access to the instances.
     Type: AWS::EC2::KeyPair::KeyName
     ConstraintDescription: must be the name of an existing EC2 KeyPair.
-  SgIngressSshCidr: # SSH 접근을 허용할 CIDR 블록
+  SgIngressSshCidr:
+    # SSH 접근을 허용할 CIDR 블록
     Description: The IP address range that can be used to communicate to the EC2 instances.
     Type: String
     MinLength: "9"
@@ -43,16 +45,18 @@ Parameters:
     Default: 0.0.0.0/0
     AllowedPattern: (\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})
     ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
-  MyInstanceType: # 인스턴스 타입(ex: t3.micro)
+  MyInstanceType:
+    # 인스턴스 타입(ex: t3.micro)
     Description: Enter EC2 Type(Spec) Ex) t3.micro.
     Type: String
     Default: t3.medium
-  LatestAmiId: # 사용할 최신 AMI ID
+  LatestAmiId:
+    # 사용할 최신 AMI ID
     Description: (DO NOT CHANGE)
     Type: "AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>"
     Default: "/aws/service/canonical/ubuntu/server/22.04/stable/current/amd64/hvm/ebs-gp2/ami-id"
     AllowedValues:
-      - /aws/service/canonical/ubuntu/server/22.04/stable/current/amd64/hvm/ebs-gp2/ami-id
+    - /aws/service/canonical/ubuntu/server/22.04/stable/current/amd64/hvm/ebs-gp2/ami-id
 
   TargetRegion:
     Type: String
@@ -60,13 +64,13 @@ Parameters:
   AvailabilityZone1:
     Type: String
     Default: ap-northeast-2a
-  AvailabilityZone2:
-    Type: String
-    Default: ap-northeast-2c
+  # AvailabilityZone2:
+  #   Type: String
+  #   Default: ap-northeast-2c
 
   VpcBlock:
     Type: String
-    Default: 10.10.0.0/16
+    Default: 172.22.0.0/16
   PublicSubnet1Block:
     Type: String
     Default: 10.10.1.0/24
@@ -83,8 +87,8 @@ Resources:
       EnableDnsSupport: true
       EnableDnsHostnames: true
       Tags:
-        - Key: Name
-          Value: Terraform-VPC
+      - Key: Name
+        Value: Terraform-VPC
 
   # PublicSubnets
   PublicSubnet1:
@@ -95,8 +99,8 @@ Resources:
       VpcId: !Ref TerraformVPC
       MapPublicIpOnLaunch: true
       Tags:
-        - Key: Name
-          Value: Terraform-PublicSubnet1
+      - Key: Name
+        Value: Terraform-PublicSubnet1
   PublicSubnet2:
     Type: AWS::EC2::Subnet
     Properties:
@@ -105,8 +109,8 @@ Resources:
       VpcId: !Ref TerraformVPC
       MapPublicIpOnLaunch: true
       Tags:
-        - Key: Name
-          Value: Terraform-PublicSubnet2
+      - Key: Name
+        Value: Terraform-PublicSubnet2
 
   InternetGateway:
     Type: AWS::EC2::InternetGateway
@@ -121,8 +125,8 @@ Resources:
     Properties:
       VpcId: !Ref TerraformVPC
       Tags:
-        - Key: Name
-          Value: Terraform-PublicSubnetRouteTable
+      - Key: Name
+        Value: Terraform-PublicSubnetRouteTable
   PublicSubnetRoute:
     Type: AWS::EC2::Route
     Properties:
@@ -147,15 +151,15 @@ Resources:
       GroupDescription: Terraform EC2 Security Group
       VpcId: !Ref TerraformVPC
       Tags:
-        - Key: Name
-          Value: Terraform-SG
+      - Key: Name
+        Value: Terraform-SG
       SecurityGroupIngress:
-        - IpProtocol: "-1"
-          CidrIp: !Ref SgIngressSshCidr
-        - IpProtocol: tcp
-          FromPort: 4141
-          ToPort: 4141
-          CidrIp: 0.0.0.0/0
+      - IpProtocol: "-1"
+        CidrIp: !Ref SgIngressSshCidr
+      - IpProtocol: tcp
+        FromPort: 4141
+        ToPort: 4141
+        CidrIp: 0.0.0.0/0
 
   EC21:
     Type: AWS::EC2::Instance
@@ -164,21 +168,21 @@ Resources:
       ImageId: !Ref LatestAmiId
       KeyName: !Ref KeyName
       Tags:
-        - Key: Name
-          Value: Atlantis
+      - Key: Name
+        Value: Atlantis
       NetworkInterfaces:
-        - DeviceIndex: 0
-          SubnetId: !Ref PublicSubnet1
-          GroupSet:
-            - !Ref EC2SG
-          AssociatePublicIpAddress: true
-          PrivateIpAddress: 10.10.1.10
+      - DeviceIndex: 0
+        SubnetId: !Ref PublicSubnet1
+        GroupSet:
+        - !Ref EC2SG
+        AssociatePublicIpAddress: true
+        PrivateIpAddress: 10.10.1.10
       BlockDeviceMappings:
-        - DeviceName: /dev/sda1
-          Ebs:
-            VolumeType: gp3
-            VolumeSize: 30
-            DeleteOnTermination: true
+      - DeviceName: /dev/sda1
+        Ebs:
+          VolumeType: gp3
+          VolumeSize: 30
+          DeleteOnTermination: true
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash
