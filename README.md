@@ -17,34 +17,6 @@
 **Note:** Your version of Terraform is out of date! The latest version is **v1.10.4**.  
 You can update by downloading from [Terraform Downloads](https://www.terraform.io/downloads.html).
 
-## Project Structure
-
-```shell
-terraform-for-ECS
-├── env/
-│   ├── dev/
-│   ├── prod/
-├── modules/
-│   ├── aws/
-│   │   ├── compute/
-│   │   │   ├── ecs/
-│   │   │   │   ├── main.tf
-│   │   │   │   ├── outputs.tf
-│   │   │   │   ├── task_definitions.tpl
-│   │   │   │   └── variables.tf
-│   │   │   ├── eks/
-│   │   │   │   ├── main.tf
-│   │   │   │   ├── outputs.tf
-│   │   │   │   └── variables.tf
-│   │   ├── ecr/
-│   │   ├── load_balancer/
-│   │   ├── network/
-│   │   ├── security/
-│   │   ├── storage/
-├── .gitignore
-└── README.md
-```
-
 ## Usage
 
 ```shell
