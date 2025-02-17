@@ -326,6 +326,48 @@ ecs_cpu_scale_out_alert = {
 }
 
 ################
+# EC2 설정
+################
+# EC2 보안그룹 설정
+ec2_security_group = {
+  "terraform-atlantis-sg" = [
+    {
+      ec2_security_group_name        = "terraform-atlantis-sg"
+      ec2_security_group_description = "Security group for ec2 with terraform atlantis"
+      env                            = "stg"
+    },
+  ],
+}
+
+# EC2 보안그룹 규칙 설정
+ec2_security_group_rules = {
+  "terraform-atlantis-sg-rule" = [
+    {
+      ec2_security_group_name  = "terraform-atlantis-sg" # 참조하는 보안그룹 이름을 넣어야 each.key로 구분 가능
+      type                     = "ingress"
+      description              = "EC2 atlantis Github web hook enter"
+      from_port                = 4141
+      to_port                  = 4141
+      protocol                 = "tcp"
+      cidr_ipv4                = ["192.30.252.0/22", "185.199.108.0/22", "140.82.112.0/20"] # GitHub Webhook IP만 허용
+      source_security_group_id = null                                                       # 필요 시 특정 보안 그룹만 허용 가능
+      env                      = "stg"
+    },
+    {
+      ec2_security_group_name  = "terraform-atlantis-sg"
+      description              = "EC2 atlantis ssh enter"
+      type                     = "ingress"
+      from_port                = 22
+      to_port                  = 22
+      protocol                 = "tcp"
+      cidr_ipv4                = ["39.118.148.0/24"] # SSH 접근을 특정 IP 대역으로 제한
+      source_security_group_id = null
+      env                      = "stg"
+    }
+  ]
+}
+
+################
 # S3 설정
 ################
 s3_bucket = {
