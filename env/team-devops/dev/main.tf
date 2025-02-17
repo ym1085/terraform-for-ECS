@@ -7,7 +7,7 @@
 # }
 
 module "network" {
-  source = "../../modules/aws/network"
+  source = "../../../modules/aws/network"
 
   vpc_cidr             = var.vpc_cidr             # IPV4 CIDR Block(172.22.0.0/16)
   enable_dns_support   = var.enable_dns_support   # DNS Hostname 사용 옵션, 기본 false(VPC 내 리소스가 AWS DNS 주소 사용 가능)
@@ -23,7 +23,7 @@ module "network" {
 }
 
 module "load_balancer" {
-  source = "../../modules/aws/load_balancer"
+  source = "../../../modules/aws/load_balancer"
 
   # 로드밸런서 관련 설정
   alb                = var.alb                # 생성을 원하는 ALB 관련 정보
@@ -46,7 +46,7 @@ module "load_balancer" {
 }
 
 module "ecr" {
-  source = "../../modules/aws/ecr"
+  source = "../../../modules/aws/ecr"
 
   # ECR 관련 설정
   ecr_repository = var.ecr_repository
@@ -56,7 +56,7 @@ module "ecr" {
 }
 
 module "security" {
-  source = "../../modules/aws/security"
+  source = "../../../modules/aws/security"
 
   # ECS IAM 관련 설정
   ecs_task_role               = var.ecs_task_role
@@ -67,8 +67,8 @@ module "security" {
   ecs_auto_scaling_policy_arn = var.ecs_auto_scaling_policy_arn
 }
 
-module "compute" {
-  source = "../../modules/aws/compute/ecs"
+module "ecs" {
+  source = "../../../modules/aws/compute/ecs"
 
   # 네트워크 설정
   vpc_id               = module.network.vpc_id
@@ -112,8 +112,21 @@ module "compute" {
   ]
 }
 
+module "ec2" {
+  source = "../../../modules/aws/compute/ec2"
+
+  # 네트워크 설정
+  vpc_id                   = module.network.vpc_id
+  ec2_security_group       = var.ec2_security_group
+  ec2_security_group_rules = var.ec2_security_group_rules
+
+  # 프로젝트 기본 설정
+  env  = var.env
+  tags = var.tags
+}
+
 module "storage" {
-  source = "../../modules/aws/storage"
+  source = "../../../modules/aws/storage"
 
   # S3 Bucket 관련 설정
   s3_bucket = var.s3_bucket
