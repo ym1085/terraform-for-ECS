@@ -76,10 +76,12 @@ output "debug_compute_module" {
 output "debug_ec2" {
   description = "ec2 모듈 변수 확인"
   value = {
-    vpc_id = module.network.vpc_id
+    vpc_id            = module.network.vpc_id
+    public_subnet_ids = module.network.public_subnet_ids
 
     ec2_security_group       = var.ec2_security_group
     ec2_security_group_rules = var.ec2_security_group_rules
+    ec2_instance             = var.ec2_instance
 
     env  = var.env
     tags = var.tags

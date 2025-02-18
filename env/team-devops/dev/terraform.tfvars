@@ -41,10 +41,7 @@ private_subnets_cidr = [
 ]
 
 # 퍼블릭 서브넷 ID 지정
-# public_subnet_ids = [
-#   "subnet-xxxxxxxx",
-#   "subnet-xxxxxxxx"
-# ]
+public_subnet_ids = []
 
 # 프라이빗 서브넷 ID 지정
 # private_subnet_ids = [
@@ -365,6 +362,26 @@ ec2_security_group_rules = {
       env                      = "stg"
     }
   ]
+}
+
+# 생성을 원하는 N개의 EC2 정보 입력 -> EC2 성격별로 나누면 될 듯(Elasticsearch, Atlantis.. 등등)
+ec2_instance = {
+  "ec2_atlantis" = {
+    # SSH key pair
+    key_pair_name         = "terraform-atlantis-key"
+    key_pair_algorithm    = "RSA"
+    rsa_bits              = 4096
+    local_file_name       = "keypair/terraform-atlantis-key.pem" # terraform key pair 생성 후 저장 경로 modules/aws/compute/ec2/...
+    local_file_permission = "0600"                               # 6(read + writer)00
+
+    # ECS Option
+    instance_type               = "t3.small"
+    associate_public_ip_address = true
+    disable_api_termination     = true
+    ec2_instance_name           = "ec2-atlantis"
+    ec2_security_group_name     = "terraform-atlantis-sg"
+    env                         = "stg"
+  }
 }
 
 ################
