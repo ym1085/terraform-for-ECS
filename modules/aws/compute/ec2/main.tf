@@ -63,10 +63,10 @@ resource "aws_security_group" "ec2_security_group" {
   })
 }
 
-# EC2 security group rule
+# EC2 security group rule ingress
 resource "aws_security_group_rule" "ec2_ingress_security_group" {
   for_each = {
-    for rule in local.valid_ec2_security_group_rules :
+    for rule in local.valid_ec2_security_group_ingress_rules :
     "${rule.ec2_security_group_name}-${rule.type}-${rule.from_port}-${rule.to_port}" => rule
   }
 
@@ -79,6 +79,24 @@ resource "aws_security_group_rule" "ec2_ingress_security_group" {
 
   cidr_blocks              = try(each.value.cidr_ipv4, null)                # 허용할 IP 범위
   source_security_group_id = try(each.value.source_security_group_id, null) # 인바운드로 보안그룹이 들어가야 하는 경우 사용
+}
+
+# EC2 security group rule egress
+resource "aws_security_group_rule" "ec2_egress_security_group" {
+  for_each = {
+    for rule in local.valid_ec2_security_group_egress_rules :
+    "${rule.ec2_security_group_name}-${rule.type}-${rule.from_port}-${rule.to_port}" => rule
+  }
+
+  description       = each.value.description
+  security_group_id = aws_security_group.ec2_security_group[each.value.ec2_security_group_name].id # 참조하는 보안그룹 ID
+  type              = each.value.type
+  from_port         = each.value.from_port
+  to_port           = each.value.to_port
+  protocol          = each.value.protocol
+
+  cidr_blocks              = try(each.value.cidr_ipv4, null)                # 허용할 IP 범위
+  source_security_group_id = try(each.value.source_security_group_id, null) # 아웃바운드로 보안그룹이 들어가야 하는 경우 사용
 }
 
 # EC2 Instance 생성
@@ -99,7 +117,7 @@ resource "aws_instance" "ec2" {
   ]
   #iam_instance_profile = xxxx # EC2에 IAM 권한이 필요한 경우 활성화
 
-  user_data = file("${path.module}/init_atlantis.sh") # EC2 초기화 스크립트 호출
+  user_data = file("${path.module}/script/init_atlantis.sh") # EC2 초기 셋팅 스크립트 호출
 
   tags = merge(var.tags, {
     Name = "${each.value.ec2_instance_name}-${each.value.env}"

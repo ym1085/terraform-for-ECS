@@ -19,6 +19,10 @@ You can update by downloading from [Terraform Downloads](https://www.terraform.i
 
 ## Usage
 
+<img src="./img/atlantis.png" weight="200px" height="250px">
+
+> AWS EC2에서 Atlantis를 사용하여 GitOps 프로세스를 운영합니다.
+
 ```shell
 cd env/dev
 ```

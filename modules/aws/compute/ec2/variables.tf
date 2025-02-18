@@ -35,8 +35,8 @@ variable "ec2_security_group" {
 }
 
 # EC2 보안그룹 규칙 설정
-variable "ec2_security_group_rules" {
-  description = "EC2 보안그룹 규칙 생성"
+variable "ec2_security_group_ingress_rules" {
+  description = "EC2 보안그룹 Ingress 규칙 생성"
   type = map(list(object({
     ec2_security_group_name  = optional(string)       # 참조하는 보안그룹 이름 지정
     description              = optional(string)       # 보안그룹 규칙 설명
@@ -46,6 +46,22 @@ variable "ec2_security_group_rules" {
     protocol                 = optional(string)       # 프로토콜
     cidr_ipv4                = optional(list(string)) # 허용할 IP CIDR 대역 범위
     source_security_group_id = optional(string)       # 보안그룹을 참조하는 경우 사용
+    env                      = optional(string)       # 환경변수
+  })))
+}
+
+variable "ec2_security_group_egress_rules" {
+  description = "EC2 보안그룹 Egress 규칙 생성"
+  type = map(list(object({
+    ec2_security_group_name  = optional(string)       # 참조하는 보안그룹 이름 지정
+    description              = optional(string)       # 보안그룹 규칙 설명
+    type                     = optional(string)       # ingress, egress
+    from_port                = optional(number)       # 포트 시작 범위
+    to_port                  = optional(number)       # 포트 종료 범위
+    protocol                 = optional(string)       # 프로토콜
+    cidr_ipv4                = optional(list(string)) # 허용할 IP CIDR 대역 범위
+    source_security_group_id = optional(string)       # 보안그룹을 참조하는 경우 사용
+    env                      = optional(string)       # 환경변수
   })))
 }
 

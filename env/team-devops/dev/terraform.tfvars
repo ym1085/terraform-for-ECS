@@ -337,8 +337,8 @@ ec2_security_group = {
 }
 
 # EC2 보안그룹 규칙 설정
-ec2_security_group_rules = {
-  "terraform-atlantis-sg-rule" = [
+ec2_security_group_ingress_rules = {
+  "terraform-atlantis-sg-ingress-rule" = [
     {
       ec2_security_group_name  = "terraform-atlantis-sg" # 참조하는 보안그룹 이름을 넣어야 each.key로 구분 가능
       type                     = "ingress"
@@ -358,6 +358,22 @@ ec2_security_group_rules = {
       to_port                  = 22
       protocol                 = "tcp"
       cidr_ipv4                = ["39.118.148.0/24"] # SSH 접근을 특정 IP 대역으로 제한
+      source_security_group_id = null
+      env                      = "stg"
+    }
+  ]
+}
+
+ec2_security_group_egress_rules = {
+  "terraform-atlantis-sg-egress-rule" = [
+    {
+      ec2_security_group_name  = "terraform-atlantis-sg"
+      description              = "Allow all outbound traffic"
+      type                     = "egress"
+      from_port                = 0
+      to_port                  = 0
+      protocol                 = "-1"          # 모든 프로토콜 허용
+      cidr_ipv4                = ["0.0.0.0/0"] # 모든 IP로 트래픽 허용
       source_security_group_id = null
       env                      = "stg"
     }
