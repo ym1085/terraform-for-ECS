@@ -120,9 +120,10 @@ module "ec2" {
   public_subnet_ids = module.network.public_subnet_ids # VPC 퍼블릭 서브넷 목록
 
   # EC2 설정
-  ec2_security_group       = var.ec2_security_group       # 보안그룹 정보 전달
-  ec2_security_group_rules = var.ec2_security_group_rules # 보안그룹 규칙 정보 전달
-  ec2_instance             = var.ec2_instance             # Atlantis EC2 정보 전달
+  ec2_security_group               = var.ec2_security_group               # 보안그룹 정보 전달
+  ec2_security_group_ingress_rules = var.ec2_security_group_ingress_rules # 보안그룹 규칙 정보 전달
+  ec2_security_group_egress_rules  = var.ec2_security_group_egress_rules  # 보안그룹 규칙 정보 전달
+  ec2_instance                     = var.ec2_instance                     # Atlantis EC2 정보 전달
 
   # 프로젝트 기본 설정
   env  = var.env
