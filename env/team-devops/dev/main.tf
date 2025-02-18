@@ -116,13 +116,21 @@ module "ec2" {
   source = "../../../modules/aws/compute/ec2"
 
   # 네트워크 설정
-  vpc_id                   = module.network.vpc_id
-  ec2_security_group       = var.ec2_security_group
-  ec2_security_group_rules = var.ec2_security_group_rules
+  vpc_id            = module.network.vpc_id
+  public_subnet_ids = module.network.public_subnet_ids # VPC 퍼블릭 서브넷 목록
+
+  # EC2 설정
+  ec2_security_group       = var.ec2_security_group       # 보안그룹 정보 전달
+  ec2_security_group_rules = var.ec2_security_group_rules # 보안그룹 규칙 정보 전달
+  ec2_instance             = var.ec2_instance             # Atlantis EC2 정보 전달
 
   # 프로젝트 기본 설정
   env  = var.env
   tags = var.tags
+
+  depends_on = [
+    module.network # network 모듈 참조
+  ]
 }
 
 module "storage" {
