@@ -145,3 +145,5 @@ terraform-prod.tfvars
 .pluralith/
 
 .DS_Store
+
+modules/aws/compute/ec2/keypair/
