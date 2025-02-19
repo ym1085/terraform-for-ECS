@@ -13,7 +13,14 @@ echo 'alias vi=vim' | sudo tee -a /etc/profile
 
 # 필수 패키지 설치
 sudo yum update -y
+sudo yum search docker -y
+sudo yum install docker -y
+sudo systemctl enable docker.service
+sudo systemctl start docker.service
+sudo systemctl status docker.service
 sudo yum install -y yum-utils unzip jq tree zip curl wget
+# https://technote.kr/369
+sudo usermod -a -G docker $USER
 
 ##############################
 # 2. Terraform 설치
@@ -38,27 +45,27 @@ aws --version
 ##############################
 # 3. Atlantis 설치
 ##############################
-wget https://github.com/runatlantis/atlantis/releases/download/v0.28.3/atlantis_linux_amd64.zip -P /root
-unzip /root/atlantis_linux_amd64.zip -d /root
-rm -rf /root/atlantis_linux_amd64.zip
+# wget https://github.com/runatlantis/atlantis/releases/download/v0.28.3/atlantis_linux_amd64.zip -P /root
+# unzip /root/atlantis_linux_amd64.zip -d /root
+# rm -rf /root/atlantis_linux_amd64.zip
 
 ##############################
 # 4. Atlantis 서버 구동을 위한 변수 설정 (영구적 적용)
 ##############################
-cat <<EOF | sudo tee /etc/profile.d/atlantis.sh
-export USERNAME="ym1085"
-export URL="https://$(curl -s ipinfo.io/ip):4141"
-export REPO_ALLOWLIST="https://github.com/ym1085/terraform-for-ECS"
-EOF
+# cat <<EOF | sudo tee /etc/profile.d/atlantis.sh
+# export USERNAME="ym1085"
+# export URL="https://$(curl -s ipinfo.io/ip):4141"
+# export REPO_ALLOWLIST="https://github.com/ym1085/terraform-for-ECS"
+# EOF
 
 # 환경변수 적용
-source /etc/profile.d/atlantis.sh
+# source /etc/profile.d/atlantis.sh
 
 # 환경변수 확인
-echo "Atlantis 서버를 아래 설정으로 시작합니다:"
-echo "URL: $URL"
-echo "GitHub Username: $USERNAME"
-echo "Repo Allowlist: $REPO_ALLOWLIST"
+# echo "Atlantis 서버를 아래 설정으로 시작합니다:"
+# echo "URL: $URL"
+# echo "GitHub Username: $USERNAME"
+# echo "Repo Allowlist: $REPO_ALLOWLIST"
 
 ##############################
 # 5. Atlantis 서버 실행
