@@ -18,14 +18,7 @@ RUN touch /home/atlantis/.aws/credentials
 # exec docker command
 ################################################
 # $ docker build -t atlantis .
-# 
-# $ docker run -itd -p 4141:4141 \
-# --name atlantis atlantis server \
-# --automerge --autoplan-modules \
-# --gh-user=<github-account-username> \
-# --gh-token=<github-usr-access-token> \
-# --repo-allowlist=<list of allowed repos
-# 
+# $ docker run -itd -p 4141:4141 --name atlantis atlantis server --automerge --autoplan-modules --gh-user=<github-account-username> --gh-token=<github-usr-access-token> --repo-allowlist=<list of allowed repos
 # $ docker ps
 # $ docker exec -it atlantis /bin/sh
 ################################################
