@@ -391,7 +391,7 @@ ec2_instance = {
     local_file_permission = "0600"                               # 6(read + writer)00
 
     # ECS Option
-    instance_type               = "t3.small"
+    instance_type               = "t2.micro"
     associate_public_ip_address = true
     disable_api_termination     = true
     ec2_instance_name           = "ec2-atlantis"
