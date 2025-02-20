@@ -1,0 +1,6 @@
+version: 3
+projects:
+  - name: team-devops-atlantis-policy
+    dir: "env/team-devops/dev"
+    autoplan:
+      enabled: false

@@ -20,7 +20,7 @@ sudo systemctl start docker.service
 sudo systemctl status docker.service
 sudo yum install -y yum-utils unzip jq tree zip curl wget
 # https://technote.kr/369
-sudo usermod -a -G docker $USER
+# sudo usermod -a -G docker $USER
 
 ##############################
 # 2. Terraform 설치
