@@ -171,7 +171,7 @@ ecs_auto_scaling_role       = "ecs_auto_scaling_role"
 ecs_auto_scaling_policy_arn = "AmazonEC2ContainerServiceAutoscaleRole" # 기존에 생성되어 있는 정책을 참조
 
 # ECS Container Image 버전
-# ecs_container_image_version = ""
+ecs_container_image_version = "1.0.0"
 
 # ECS Task Definitions 생성
 # TODO: containers.env 추가? + image_version 어떻게 받을지?
@@ -340,24 +340,33 @@ ec2_security_group = {
 ec2_security_group_ingress_rules = {
   "terraform-atlantis-sg-ingress-rule" = [
     {
-      ec2_security_group_name  = "terraform-atlantis-sg" # 참조하는 보안그룹 이름을 넣어야 each.key로 구분 가능
-      type                     = "ingress"
-      description              = "EC2 atlantis Github web hook enter"
-      from_port                = 4141
-      to_port                  = 4141
-      protocol                 = "tcp"
-      cidr_ipv4                = ["192.30.252.0/22", "185.199.108.0/22", "140.82.112.0/20"] # GitHub Webhook IP만 허용
-      source_security_group_id = null                                                       # 필요 시 특정 보안 그룹만 허용 가능
+      ec2_security_group_name = "terraform-atlantis-sg" # 참조하는 보안그룹 이름을 넣어야 each.key로 구분 가능
+      type                    = "ingress"
+      description             = "EC2 atlantis Github web hook & Desktop enter"
+      from_port               = 4141
+      to_port                 = 4141
+      protocol                = "tcp"
+      cidr_ipv4 = [
+        "192.30.252.0/22",
+        "185.199.108.0/22",
+        "140.82.112.0/20",
+        "39.118.148.0/24",
+        "220.75.180.73/32"
+      ]
+      source_security_group_id = null
       env                      = "stg"
     },
     {
-      ec2_security_group_name  = "terraform-atlantis-sg"
-      description              = "EC2 atlantis ssh enter"
-      type                     = "ingress"
-      from_port                = 22
-      to_port                  = 22
-      protocol                 = "tcp"
-      cidr_ipv4                = ["39.118.148.0/24"] # SSH 접근을 특정 IP 대역으로 제한
+      ec2_security_group_name = "terraform-atlantis-sg"
+      description             = "EC2 atlantis ssh enter"
+      type                    = "ingress"
+      from_port               = 22
+      to_port                 = 22
+      protocol                = "tcp"
+      cidr_ipv4 = [
+        "39.118.148.0/24",
+        "220.75.180.73/32"
+      ]
       source_security_group_id = null
       env                      = "stg"
     }
