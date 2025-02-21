@@ -5,8 +5,12 @@ set -e
 ##############################
 # 1. 시스템 설정 및 기본 패키지 설치
 ##############################
+echo -e "################################"
+echo -e "1. 시스템 설정 및 기본 패키지 설치"
+echo -e "################################"
 # 호스트명 설정
 sudo hostnamectl --static set-hostname Atlantis
+echo
 
 # alias 설정 및 bashrc 수정
 echo 'alias vi=vim' | sudo tee -a /etc/profile
@@ -17,14 +21,15 @@ sudo yum search docker -y
 sudo yum install docker -y
 sudo systemctl enable docker.service
 sudo systemctl start docker.service
-sudo systemctl status docker.service
-sudo yum install -y yum-utils unzip jq tree zip curl wget
-# https://technote.kr/369
-# sudo usermod -a -G docker $USER
+# sudo systemctl status docker.service --no-pager
+sudo yum install -y yum-utils unzip jq tree zip curl wget --allowerasing
 
 ##############################
 # 2. Terraform 설치
 ##############################
+echo -e "################################"
+echo -e "2. Terraform 설치"
+echo -e "################################"
 sudo yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo
 sudo yum install -y terraform
 
@@ -32,8 +37,11 @@ sudo yum install -y terraform
 terraform -version
 
 ##############################
-# 2. AWS CLI v2 설치
+# 3. AWS CLI v2 설치
 ##############################
+echo -e "################################"
+echo -e "3. AWS CLI v2 설치"
+echo -e "################################"
 curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
 unzip awscliv2.zip
 sudo ./aws/install
@@ -42,37 +50,57 @@ rm -rf awscliv2.zip aws
 # 설치 확인
 aws --version
 
-##############################
-# 3. Atlantis 설치
-##############################
-# wget https://github.com/runatlantis/atlantis/releases/download/v0.28.3/atlantis_linux_amd64.zip -P /root
-# unzip /root/atlantis_linux_amd64.zip -d /root
-# rm -rf /root/atlantis_linux_amd64.zip
+# 작업 디렉토리 설정
+cd /home/ec2-user
+
+# AWS 디렉토리 및 파일 생성
+mkdir -p /home/ec2-user/.aws
+touch /home/ec2-user/.aws/credentials
+touch /home/ec2-user/.aws/config
+chmod 700 /home/ec2-user/.aws
+chmod 600 /home/ec2-user/.aws/credentials /home/ec2-user/.aws/config
+sudo chown -R ec2-user:ec2-user /home/ec2-user/.aws
 
 ##############################
-# 4. Atlantis 서버 구동을 위한 변수 설정 (영구적 적용)
+# 4. Dockerfile & docker image 생성
 ##############################
-# cat <<EOF | sudo tee /etc/profile.d/atlantis.sh
-# export USERNAME="ym1085"
-# export URL="https://$(curl -s ipinfo.io/ip):4141"
-# export REPO_ALLOWLIST="https://github.com/ym1085/terraform-for-ECS"
-# EOF
+echo -e "################################"
+echo -e "4. Dockerfile & docker image 생성"
+echo -e "################################"
+cat <<EOF > Dockerfile
+# Atlantis Base Image 지정
+FROM ghcr.io/runatlantis/atlantis:latest
 
-# 환경변수 적용
-# source /etc/profile.d/atlantis.sh
+# 기본 atlantis 사용자 대신 root 사용자로 변경
+USER root
 
-# 환경변수 확인
-# echo "Atlantis 서버를 아래 설정으로 시작합니다:"
-# echo "URL: $URL"
-# echo "GitHub Username: $USERNAME"
-# echo "Repo Allowlist: $REPO_ALLOWLIST"
+# AWS CLI 설치
+RUN apk add --no-cache aws-cli
 
-##############################
-# 5. Atlantis 서버 실행
-##############################
-# /root/atlantis server \
-# --atlantis-url="$URL" \
-# --gh-user="$USERNAME" \
-# --gh-token="$TOKEN" \
-# --gh-webhook-secret="$SECRET" \
-# --repo-allowlist="$REPO_ALLOWLIST"
+# AWS Credential 저장할 디렉토리 및 파일 생성
+RUN mkdir /home/atlantis/.aws
+RUN touch /home/atlantis/.aws/credentials
+WORKDIR /home/atlantis
+
+#RUN chown -R atlantis:atlantis /home/atlantis/.aws
+EOF
+
+# https://technote.kr/369
+# 현재 사용자를 Docker 그룹에 추가
+sudo usermod -aG docker ec2-user
+#exec $SHELL -l
+
+# Docker image 생성
+sudo docker build -t atlantis .
+
+# Docker Atlantis 실행
+sudo docker run -itd \
+-p 4141:4141 \
+--name atlantis \
+-v /home/ec2-user/.aws:/home/atlantis/.aws:ro \
+atlantis server \
+--automerge \
+--autoplan-modules \
+--gh-user=<github username> \
+--gh-token=<github token> \
+--repo-allowlist=github.com/<repo URL>
