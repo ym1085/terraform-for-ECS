@@ -147,3 +147,4 @@ terraform-prod.tfvars
 .DS_Store
 
 modules/aws/compute/ec2/keypair/
+modules/aws/compute/ec2/script/init_atlantis_dev.sh

@@ -117,7 +117,7 @@ resource "aws_instance" "ec2" {
   ]
   #iam_instance_profile = xxxx # EC2에 IAM 권한이 필요한 경우 활성화
 
-  user_data = file("${path.module}/script/init_atlantis.sh") # EC2 초기 셋팅 스크립트 호출
+  user_data = file("${path.module}/script/init_atlantis_dev.sh") # EC2 초기 셋팅 스크립트 호출
 
   tags = merge(var.tags, {
     Name = "${each.value.ec2_instance_name}-${each.value.env}"
