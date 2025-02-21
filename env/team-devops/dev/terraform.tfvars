@@ -350,8 +350,7 @@ ec2_security_group_ingress_rules = {
         "192.30.252.0/22",
         "185.199.108.0/22",
         "140.82.112.0/20",
-        "39.118.148.0/24",
-        "220.75.180.73/32"
+        "39.118.148.0/24"
       ]
       source_security_group_id = null
       env                      = "stg"
@@ -364,8 +363,7 @@ ec2_security_group_ingress_rules = {
       to_port                 = 22
       protocol                = "tcp"
       cidr_ipv4 = [
-        "39.118.148.0/24",
-        "220.75.180.73/32"
+        "39.118.148.0/24"
       ]
       source_security_group_id = null
       env                      = "stg"
