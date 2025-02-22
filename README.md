@@ -22,9 +22,9 @@
 
 > AWS EC2 자격증명의 경우 Role Base로 변경을 진행할 예정입니다.
 
-GitOps 환경에서 Terraform으로 생성된 EC2 서버에 Atlantis를 Docker 컨테이너를 구동합니다. 
-Github PR이 생성되면, Github Webhook을 통해 EC2에서 실행 중인 Atlantis로 요청을 보내고 명령을 수행합니다. 
-Terraform을 통해 EC2가 생성되면, 해당 서버에 접속하여 AWS 자격 증명을 등록해야 합니다. 
+GitOps 환경에서 Terraform으로 생성된 EC2 서버에 Atlantis를 Docker 컨테이너를 구동합니다.
+Github PR이 생성되면, Github Webhook을 통해 EC2에서 실행 중인 Atlantis로 요청을 보내고 명령을 수행합니다.
+Terraform을 통해 EC2가 생성되면, 해당 서버에 접속하여 AWS 자격 증명을 등록해야 합니다.
 등록된 자격 증명은 Docker 컨테이너에 마운트하여 지속적으로 유지됩니다.
 
 ### Edit init_atlantis.sh
@@ -34,8 +34,8 @@ Terraform을 통해 EC2가 생성되면, 해당 서버에 접속하여 AWS 자�
 vi modules/aws/compute/ec2/script/init_atlantis.sh
 ```
 
-Terraform을 사용하여 EC2 인스턴스 생성 후 Docker 컨테이너로 Atlantis를 구동 하도록 되어 있습니다.  
-하여, Github의 `USERNAME`, `Token`, `Repo URL`은 보안상 직접 노출이 불가능하기에 본인 계정 정보를 기재해야 합니다.  
+Terraform을 사용하여 EC2 인스턴스 생성 후 Docker 컨테이너로 Atlantis를 구동 하도록 되어 있습니다.
+하여, Github의 `USERNAME`, `Token`, `Repo URL`은 보안상 직접 노출이 불가능하기에 본인 계정 정보를 기재해야 합니다.
 `Atlantis EC2 & Github Webhook 셋팅` 관련 내용은 [다음 링크](https://okms1017.tistory.com/70)를 참고 부탁드리겠습니다.
 
 ```shell
