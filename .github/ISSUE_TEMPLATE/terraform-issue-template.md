@@ -11,7 +11,8 @@ assignees: ym1085
 
 ## 기능 구현 내용
 
-- TODO
+- [ ] TODO
+- [ ] TODO
 
 ## 오류 내용
 
