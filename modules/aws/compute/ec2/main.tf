@@ -20,7 +20,7 @@ data "aws_ami" "amazon-linux-2" {
 # 암호화 방식 결정 + TLS(SSL) 개인키 생성
 # https://dev.classmethod.jp/articles/terraform-keypair-create/
 resource "tls_private_key" "ec2_key_pair_rsa" {
-  for_each = var.ec2_instance
+  for_each = local.create_ec2 ? var.ec2_instance : {}
 
   algorithm = each.value.key_pair_algorithm # RSA 알고리즘 설정
   rsa_bits  = each.value.rsa_bits           # RSA 키 길이를 4096 bit로 설정 (4096 => 보안성 높은 설정 값, default => 2048)
@@ -28,7 +28,7 @@ resource "tls_private_key" "ec2_key_pair_rsa" {
 
 # EC2 key pair 생성 - Atlantis
 resource "aws_key_pair" "ec2_key_pair" {
-  for_each = var.ec2_instance
+  for_each = local.create_ec2 ? var.ec2_instance : {}
 
   key_name   = each.value.key_pair_name
   public_key = tls_private_key.ec2_key_pair_rsa[each.key].public_key_openssh # Terraform이 생성한 RSA키의 공개 키를 가져와 EC2 SSH 키 페어로 등록
@@ -36,7 +36,7 @@ resource "aws_key_pair" "ec2_key_pair" {
 
 # Local에 생성한 EC2 key pair 저장
 resource "local_file" "ec2_key_pair_local_file" {
-  for_each = var.ec2_instance
+  for_each = local.create_ec2 ? var.ec2_instance : {}
 
   content         = tls_private_key.ec2_key_pair_rsa[each.key].private_key_pem # 어떤 파일을 대상으로 할지 지정
   filename        = "${path.module}/${each.value.local_file_name}"             # key pair 이름+경로 지정
@@ -45,10 +45,10 @@ resource "local_file" "ec2_key_pair_local_file" {
 
 # EC2 security group
 resource "aws_security_group" "ec2_security_group" {
-  for_each = {
+  for_each = local.create_ec2 ? {
     for sg in local.valid_ec2_security_group :
     sg.ec2_security_group_name => sg
-  }
+  } : {}
 
   name        = each.value.ec2_security_group_name
   description = each.value.ec2_security_group_description
@@ -65,10 +65,10 @@ resource "aws_security_group" "ec2_security_group" {
 
 # EC2 security group rule ingress
 resource "aws_security_group_rule" "ec2_ingress_security_group" {
-  for_each = {
+  for_each = local.create_ec2 ? {
     for rule in local.valid_ec2_security_group_ingress_rules :
     "${rule.ec2_security_group_name}-${rule.type}-${rule.from_port}-${rule.to_port}" => rule
-  }
+  } : {}
 
   description       = each.value.description                                                       # 보안그룹 DESC
   security_group_id = aws_security_group.ec2_security_group[each.value.ec2_security_group_name].id # 참조하는 보안그룹 ID
@@ -83,10 +83,10 @@ resource "aws_security_group_rule" "ec2_ingress_security_group" {
 
 # EC2 security group rule egress
 resource "aws_security_group_rule" "ec2_egress_security_group" {
-  for_each = {
+  for_each = local.create_ec2 ? {
     for rule in local.valid_ec2_security_group_egress_rules :
     "${rule.ec2_security_group_name}-${rule.type}-${rule.from_port}-${rule.to_port}" => rule
-  }
+  } : {}
 
   description       = each.value.description
   security_group_id = aws_security_group.ec2_security_group[each.value.ec2_security_group_name].id # 참조하는 보안그룹 ID
@@ -101,7 +101,7 @@ resource "aws_security_group_rule" "ec2_egress_security_group" {
 
 # EC2 Instance 생성
 resource "aws_instance" "ec2" {
-  for_each = var.ec2_instance
+  for_each = local.create_ec2 ? var.ec2_instance : {}
 
   ami           = data.aws_ami.amazon-linux-2.id # Amazon Linux2 AMI ID 지정
   instance_type = each.value.instance_type       # EC2 인스턴스 타입 지정

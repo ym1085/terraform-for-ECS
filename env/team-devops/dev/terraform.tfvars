@@ -417,6 +417,18 @@ s3_bucket = {
 }
 
 ################
+# CICD 설정
+################
+code_commit = {
+  "core-search-repository" = {
+    repository_name = "core-search"
+    description     = "AWS Codecommit Repository for ecs core api server"
+    default_branch  = "master"
+    env             = "stg"
+  }
+}
+
+################
 # 공통 태그 설정
 ################
 tags = {
