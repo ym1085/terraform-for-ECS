@@ -2,6 +2,7 @@
   Terraform 상태 관리 state 파일을 S3에 올려두고 상태 관리 수행
   - Terraform backend란?
     - https://terraform101.inflearn.devopsart.dev/advanced/backend/
+    - https://kschoi728.tistory.com/30
     - Terraform backend file은 state file을 어디에 저장하고 가져올지에 대한 설정
     - 기본적으로 로컬 스토리지에 저장하지만, 설정에 따라 s3, consul, etcd 등의 타입 설정 가능
   
