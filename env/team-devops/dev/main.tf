@@ -134,6 +134,17 @@ module "ec2" {
   ]
 }
 
+module "code_commit" {
+  source = "../../../modules/aws/cicd/codecommit"
+
+  # Codecommit 설정
+  code_commit = var.code_commit
+
+  # 프로젝트 기본 설정
+  env  = var.env
+  tags = var.tags
+}
+
 module "storage" {
   source = "../../../modules/aws/storage"
 
