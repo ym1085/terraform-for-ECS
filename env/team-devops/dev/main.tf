@@ -1,10 +1,4 @@
-# 기본 VPC가 존재하는 경우, data 구문을 통해 VPC 참조
-# data "aws_vpc" "vpc" {
-#   filter {
-#     name   = "tag:Name"      # 필터링 조건은 VPC명
-#     values = ["default-vpc"] # 이미 생성되어 있는 VPC의 이름을 기반으로 VPC ID 조회
-#   }
-# }
+# env/team-devops/dev/main.tf
 
 module "network" {
   source = "../../../modules/aws/network"

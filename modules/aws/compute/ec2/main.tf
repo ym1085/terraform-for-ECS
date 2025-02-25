@@ -20,7 +20,9 @@ data "aws_ami" "amazon-linux-2" {
 # 암호화 방식 결정 + TLS(SSL) 개인키 생성
 # https://dev.classmethod.jp/articles/terraform-keypair-create/
 resource "tls_private_key" "ec2_key_pair_rsa" {
-  for_each = local.create_ec2 ? var.ec2_instance : {}
+  for_each = {
+    for key, value in var.ec2_instance : key => value if value.create
+  }
 
   algorithm = each.value.key_pair_algorithm # RSA 알고리즘 설정
   rsa_bits  = each.value.rsa_bits           # RSA 키 길이를 4096 bit로 설정 (4096 => 보안성 높은 설정 값, default => 2048)
@@ -28,7 +30,9 @@ resource "tls_private_key" "ec2_key_pair_rsa" {
 
 # EC2 key pair 생성 - Atlantis
 resource "aws_key_pair" "ec2_key_pair" {
-  for_each = local.create_ec2 ? var.ec2_instance : {}
+  for_each = {
+    for key, value in var.ec2_instance : key => value if value.create
+  }
 
   key_name   = each.value.key_pair_name
   public_key = tls_private_key.ec2_key_pair_rsa[each.key].public_key_openssh # Terraform이 생성한 RSA키의 공개 키를 가져와 EC2 SSH 키 페어로 등록
@@ -36,7 +40,9 @@ resource "aws_key_pair" "ec2_key_pair" {
 
 # Local에 생성한 EC2 key pair 저장
 resource "local_file" "ec2_key_pair_local_file" {
-  for_each = local.create_ec2 ? var.ec2_instance : {}
+  for_each = {
+    for key, value in var.ec2_instance : key => value if value.create
+  }
 
   content         = tls_private_key.ec2_key_pair_rsa[each.key].private_key_pem # 어떤 파일을 대상으로 할지 지정
   filename        = "${path.module}/${each.value.local_file_name}"             # key pair 이름+경로 지정
@@ -45,10 +51,10 @@ resource "local_file" "ec2_key_pair_local_file" {
 
 # EC2 security group
 resource "aws_security_group" "ec2_security_group" {
-  for_each = local.create_ec2 ? {
+  for_each = {
     for sg in local.valid_ec2_security_group :
     sg.ec2_security_group_name => sg
-  } : {}
+  }
 
   name        = each.value.ec2_security_group_name
   description = each.value.ec2_security_group_description

@@ -389,20 +389,39 @@ ec2_security_group_egress_rules = {
 
 # 생성을 원하는 N개의 EC2 정보 입력 -> EC2 성격별로 나누면 될 듯(Elasticsearch, Atlantis.. 등등)
 ec2_instance = {
-  "ec2_atlantis" = {
+  "ec2_atlantis" = { # GitOps Atlantis
+    create = false
+
     # SSH key pair
-    key_pair_name         = "terraform-atlantis-key"
+    key_pair_name         = "atlantis-ec2-key"
     key_pair_algorithm    = "RSA"
     rsa_bits              = 4096
-    local_file_name       = "keypair/terraform-atlantis-key.pem" # terraform key pair 생성 후 저장 경로 modules/aws/compute/ec2/...
-    local_file_permission = "0600"                               # 6(read + writer)00
+    local_file_name       = "keypair/atlantis-ec2-key.pem" # terraform key pair 생성 후 저장 경로 modules/aws/compute/ec2/...
+    local_file_permission = "0600"                         # 6(read + writer)00
 
     # ECS Option
     instance_type               = "t2.micro"
     associate_public_ip_address = true
     disable_api_termination     = true
-    ec2_instance_name           = "ec2-atlantis"
-    ec2_security_group_name     = "terraform-atlantis-sg"
+    ec2_instance_name           = "atlantis-ec2"
+    ec2_security_group_name     = "atlantis-sg"
+    env                         = "stg"
+  },
+  "ec2_jenkins" = { # Jenkins on EC2
+    create = true # EC2 인스턴스 생성 여부 지정
+
+    key_pair_name         = "jenkins-ec2-key"
+    key_pair_algorithm    = "RSA"
+    rsa_bits              = 4096
+    local_file_name       = "keypair/jenkins-ec2-key.pem" # terraform key pair 생성 후 저장 경로 modules/aws/compute/ec2/...
+    local_file_permission = "0600"                        # 6(read + writer)00
+
+    # ECS Option
+    instance_type               = "t2.micro"    # EC2 인스턴스 타입 지정
+    associate_public_ip_address = true          # EC2 퍼블릭 IP 자동 할당 여부 지정
+    disable_api_termination     = true          # API 기반 EC2 삭제 disabled
+    ec2_instance_name           = "jenkins-ec2" # EC2 인스턴스명
+    ec2_security_group_name     = "jenkins-sg"  # EC2 인스턴스 보안그룹명
     env                         = "stg"
   }
 }

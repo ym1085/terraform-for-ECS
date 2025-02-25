@@ -368,6 +368,7 @@ variable "ecs_cpu_scale_out_alert" {
 variable "ec2_security_group" {
   description = "EC2 보안그룹 생성"
   type = map(list(object({
+    create                         = optional(bool, true) # 기본값 true
     ec2_security_group_name        = optional(string)
     ec2_security_group_description = optional(string)
     env                            = optional(string)
@@ -409,6 +410,9 @@ variable "ec2_security_group_egress_rules" {
 variable "ec2_instance" {
   description = "EC2 생성 정보 입력"
   type = map(object({
+    # Option
+    create = bool # EC2 인스턴스 생성 여부 지정
+
     # SSH key pair
     key_pair_name         = string
     key_pair_algorithm    = string
