@@ -52,8 +52,7 @@ resource "local_file" "ec2_key_pair_local_file" {
 # EC2 security group
 resource "aws_security_group" "ec2_security_group" {
   for_each = {
-    for sg in local.valid_ec2_security_group :
-    sg.ec2_security_group_name => sg
+    for key, value in var.ec2_security_group : key => value if value.create
   }
 
   name        = each.value.ec2_security_group_name
@@ -71,10 +70,10 @@ resource "aws_security_group" "ec2_security_group" {
 
 # EC2 security group rule ingress
 resource "aws_security_group_rule" "ec2_ingress_security_group" {
-  for_each = local.create_ec2 ? {
+  for_each = {
     for rule in local.valid_ec2_security_group_ingress_rules :
-    "${rule.ec2_security_group_name}-${rule.type}-${rule.from_port}-${rule.to_port}" => rule
-  } : {}
+    "${rule.ec2_security_group_name}-${rule.type}-${rule.from_port}-${rule.to_port}" => rule if rule.create
+  }
 
   description       = each.value.description                                                       # 보안그룹 DESC
   security_group_id = aws_security_group.ec2_security_group[each.value.ec2_security_group_name].id # 참조하는 보안그룹 ID
@@ -89,10 +88,10 @@ resource "aws_security_group_rule" "ec2_ingress_security_group" {
 
 # EC2 security group rule egress
 resource "aws_security_group_rule" "ec2_egress_security_group" {
-  for_each = local.create_ec2 ? {
+  for_each = {
     for rule in local.valid_ec2_security_group_egress_rules :
-    "${rule.ec2_security_group_name}-${rule.type}-${rule.from_port}-${rule.to_port}" => rule
-  } : {}
+    "${rule.ec2_security_group_name}-${rule.type}-${rule.from_port}-${rule.to_port}" => rule if rule.create
+  }
 
   description       = each.value.description
   security_group_id = aws_security_group.ec2_security_group[each.value.ec2_security_group_name].id # 참조하는 보안그룹 ID
@@ -107,12 +106,23 @@ resource "aws_security_group_rule" "ec2_egress_security_group" {
 
 # EC2 Instance 생성
 resource "aws_instance" "ec2" {
-  for_each = local.create_ec2 ? var.ec2_instance : {}
+  for_each = {
+    for key, value in var.ec2_instance : key => value if value.create
+  }
 
   ami           = data.aws_ami.amazon-linux-2.id # Amazon Linux2 AMI ID 지정
   instance_type = each.value.instance_type       # EC2 인스턴스 타입 지정
 
-  subnet_id                   = var.public_subnet_ids[0]               # TODO: EC2 인스턴스를 배포할 서브넷 ID 지정
+  # EC2가 위치할 VPC Subnet 영역 지정(az-2a, az-2b)
+  subnet_id = lookup(
+    {
+      "public"  = try(element(var.public_subnet_ids, index(var.availability_zones, each.value.availability_zones)), var.public_subnet_ids[0]),
+      "private" = try(element(var.private_subnet_ids, index(var.availability_zones, each.value.availability_zones)), var.private_subnet_ids[0])
+    },
+    each.value.subnet_type,
+    var.public_subnet_ids[0]
+  )
+
   associate_public_ip_address = each.value.associate_public_ip_address # 퍼블릭 IP 할당 여부 지정(true면 공인 IP 부여 -> 고정 IP 아님)
   disable_api_termination     = each.value.disable_api_termination     # TRUE인 경우 콘솔/API로 삭제 불가
 
@@ -123,7 +133,8 @@ resource "aws_instance" "ec2" {
   ]
   #iam_instance_profile = xxxx # EC2에 IAM 권한이 필요한 경우 활성화
 
-  user_data = file("${path.module}/script/init_atlantis_dev.sh") # EC2 초기 셋팅 스크립트 호출
+  # lookup(map, key, default)
+  user_data = lookup(each.value, "script_file_name", null) != null ? file("${path.module}/script/${each.value.script_file_name}") : null
 
   tags = merge(var.tags, {
     Name = "${each.value.ec2_instance_name}-${each.value.env}"

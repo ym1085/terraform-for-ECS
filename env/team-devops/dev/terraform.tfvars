@@ -44,10 +44,7 @@ private_subnets_cidr = [
 public_subnet_ids = []
 
 # 프라이빗 서브넷 ID 지정
-# private_subnet_ids = [
-#   "subnet-xxxxxxxx",
-#   "subnet-xxxxxxxx"
-# ]
+private_subnet_ids = []
 
 # DNS Hostname 사용 옵션, 기본 false(VPC 내 리소스가 AWS DNS 주소 사용 가능)
 # DNS 기능 자체를 켤지 말지 정하는 옵션, 키는 경우 VPC에서 DNS 기능 사용 가능
@@ -327,20 +324,26 @@ ecs_cpu_scale_out_alert = {
 ################
 # EC2 보안그룹 설정
 ec2_security_group = {
-  "terraform-atlantis-sg" = [
-    {
-      ec2_security_group_name        = "terraform-atlantis-sg"
-      ec2_security_group_description = "Security group for ec2 with terraform atlantis"
-      env                            = "stg"
-    },
-  ],
+  "atlantis-sg" = {
+    create                         = false
+    ec2_security_group_name        = "atlantis-sg"
+    ec2_security_group_description = "Security group for ec2 with atlantis"
+    env                            = "stg"
+  },
+  "jenkins-sg" = {
+    create                         = true
+    ec2_security_group_name        = "jenkins-sg"
+    ec2_security_group_description = "Security group for ec2 with jenkins"
+    env                            = "stg"
+  }
 }
 
 # EC2 보안그룹 규칙 설정
 ec2_security_group_ingress_rules = {
-  "terraform-atlantis-sg-ingress-rule" = [
+  "atlantis-sg-ingress-rule" = [
     {
-      ec2_security_group_name = "terraform-atlantis-sg" # 참조하는 보안그룹 이름을 넣어야 each.key로 구분 가능
+      create                  = false
+      ec2_security_group_name = "atlantis-sg" # 참조하는 보안그룹 이름을 넣어야 each.key로 구분 가능
       type                    = "ingress"
       description             = "EC2 atlantis Github web hook & Desktop enter"
       from_port               = 4141
@@ -356,8 +359,39 @@ ec2_security_group_ingress_rules = {
       env                      = "stg"
     },
     {
-      ec2_security_group_name = "terraform-atlantis-sg"
+      create                  = false
+      ec2_security_group_name = "atlantis-sg"
       description             = "EC2 atlantis ssh enter"
+      type                    = "ingress"
+      from_port               = 22
+      to_port                 = 22
+      protocol                = "tcp"
+      cidr_ipv4 = [
+        "39.118.148.0/24"
+      ]
+      source_security_group_id = null
+      env                      = "stg"
+    }
+  ],
+  "jenkins-sg-ingress-rule" = [
+    {
+      create                  = true
+      ec2_security_group_name = "jenkins-sg"
+      description             = "EC2 jenkins service port"
+      type                    = "ingress"
+      from_port               = 8080
+      to_port                 = 8080
+      protocol                = "tcp"
+      cidr_ipv4 = [
+        "39.118.148.0/24"
+      ]
+      source_security_group_id = null
+      env                      = "stg"
+    },
+    {
+      create                  = true
+      ec2_security_group_name = "jenkins-sg"
+      description             = "EC2 jenkins ssh enter"
       type                    = "ingress"
       from_port               = 22
       to_port                 = 22
@@ -372,9 +406,24 @@ ec2_security_group_ingress_rules = {
 }
 
 ec2_security_group_egress_rules = {
-  "terraform-atlantis-sg-egress-rule" = [
+  "atlantis-sg-egress-rule" = [
     {
-      ec2_security_group_name  = "terraform-atlantis-sg"
+      create                   = false
+      ec2_security_group_name  = "atlantis-sg"
+      description              = "Allow all outbound traffic"
+      type                     = "egress"
+      from_port                = 0
+      to_port                  = 0
+      protocol                 = "-1"          # 모든 프로토콜 허용
+      cidr_ipv4                = ["0.0.0.0/0"] # 모든 IP로 트래픽 허용
+      source_security_group_id = null
+      env                      = "stg"
+    }
+  ],
+  "jenkins-sg-egress-rule" = [
+    {
+      create                   = true
+      ec2_security_group       = "jenkins-sg"
       description              = "Allow all outbound traffic"
       type                     = "egress"
       from_port                = 0
@@ -399,16 +448,19 @@ ec2_instance = {
     local_file_name       = "keypair/atlantis-ec2-key.pem" # terraform key pair 생성 후 저장 경로 modules/aws/compute/ec2/...
     local_file_permission = "0600"                         # 6(read + writer)00
 
-    # ECS Option
+    # EC2 Option
     instance_type               = "t2.micro"
+    subnet_type                 = "public"
+    availability_zones          = "ap-northeast-2a"
     associate_public_ip_address = true
     disable_api_termination     = true
     ec2_instance_name           = "atlantis-ec2"
     ec2_security_group_name     = "atlantis-sg"
     env                         = "stg"
+    script_file_name            = "install_atlantis_dev.sh" # 스크립트 파일명 지정
   },
   "ec2_jenkins" = { # Jenkins on EC2
-    create = true # EC2 인스턴스 생성 여부 지정
+    create = true   # EC2 인스턴스 생성 여부 지정
 
     key_pair_name         = "jenkins-ec2-key"
     key_pair_algorithm    = "RSA"
@@ -416,13 +468,16 @@ ec2_instance = {
     local_file_name       = "keypair/jenkins-ec2-key.pem" # terraform key pair 생성 후 저장 경로 modules/aws/compute/ec2/...
     local_file_permission = "0600"                        # 6(read + writer)00
 
-    # ECS Option
-    instance_type               = "t2.micro"    # EC2 인스턴스 타입 지정
-    associate_public_ip_address = true          # EC2 퍼블릭 IP 자동 할당 여부 지정
-    disable_api_termination     = true          # API 기반 EC2 삭제 disabled
-    ec2_instance_name           = "jenkins-ec2" # EC2 인스턴스명
-    ec2_security_group_name     = "jenkins-sg"  # EC2 인스턴스 보안그룹명
+    # EC2 Option
+    instance_type               = "t2.micro"        # EC2 인스턴스 타입 지정
+    subnet_type                 = "private"         # Jenkins는 Private에 위치하고, ELB를 통해 접속
+    availability_zones          = "ap-northeast-2a" # Private A zone에 위치
+    associate_public_ip_address = true              # EC2 퍼블릭 IP 자동 할당 여부 지정
+    disable_api_termination     = true              # API 기반 EC2 삭제 disabled
+    ec2_instance_name           = "jenkins-ec2"     # EC2 인스턴스명
+    ec2_security_group_name     = "jenkins-sg"      # EC2 인스턴스 보안그룹명
     env                         = "stg"
+    script_file_name            = "install_jenkins.sh" # 스크립트 파일명 지정
   }
 }
 
