@@ -26,7 +26,7 @@ terraform {
     }
     random = {
       source  = "hashicorp/random" # Hashicorp에서 제공하는 랜덤 값 생성용 프로바이더
-      version = "~> 3.0"
+      version = "~> 3.0.0"
     }
   }
 }
