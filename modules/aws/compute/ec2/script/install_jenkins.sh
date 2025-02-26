@@ -36,11 +36,11 @@ echo -e "################################"
 # - LTS: 안정성 + 장기적인 지원을 보장하는 버전
 # - Weekly: 최신 기능과 개선 사항이 포함된 버전
 # https://hub.docker.com/layers/jenkins/jenkins/lts-jdk17/images/sha256-d09e6172a0c88f41c56a7d98bbc1817aeb8d3086e70e8bd2b2640502ceb30f3b
-docker pull jenkins/jenkins:lts-jdk17
+sudo docker pull jenkins/jenkins:lts-jdk17
 
 # Jenkins Docker container 실행
 # TODO: 마운트의 경우 docker volume을 일단 사용, 추후 변경 관련 고민이 필요할 듯
-docker run -d \
+sudo docker run -d \
 -p 8080:8080 \
 -p 50000:50000 \
 --name jenkins \

@@ -145,6 +145,46 @@ ecr_repository = {
 }
 
 ####################
+# IAM 설정
+####################
+# TODO: IAM 수정 중
+# iam_role = {
+#   "ecs" = {
+#     "ecs_task_role" = {
+#       "version" = "2012-10-17",
+#       "statement" = [
+#         {
+#           Action = "sts:AssumeRole"
+#           Effect = "Allow"
+#           Principal = {
+#             Service = "ecs-tasks.amazonaws.com"
+#           }
+#         }
+#       ]
+#     },
+#     "ecs_task_exec_role" = {
+#     },
+#     "ecs_auto_scaling_role" = {
+#     }
+#   },
+#   "ec2" = {
+#   }
+# }
+
+# iam_policy = {
+#   "ecs" = {
+#     "ecs_task_role_policy" = {
+#     },
+#     "ecs_task_exec_role_policy" = {
+#     },
+#     "ecs_auto_scaling_role_policy" = {
+#     }
+#   },
+#   "ec2" = {
+#   }
+# }
+
+####################
 # ECS 클러스터 설정
 ####################
 # ECS 클러스터 생성
@@ -161,9 +201,9 @@ ecs_security_group = "core-search-ecs-sg"
 
 # ECS IAM Role
 ecs_task_role               = "ecs_task_role"
-ecs_task_role_policy        = "custom_ecs_task_role_policy"
+ecs_task_role_policy        = "ecs_task_role_policy"
 ecs_task_exec_role          = "ecs_task_exec_role"
-ecs_task_exec_role_policy   = "custom_ecs_task_exec_role_policy"
+ecs_task_exec_role_policy   = "ecs_task_exec_role_policy"
 ecs_auto_scaling_role       = "ecs_auto_scaling_role"
 ecs_auto_scaling_policy_arn = "AmazonEC2ContainerServiceAutoscaleRole" # 기존에 생성되어 있는 정책을 참조
 
@@ -438,7 +478,7 @@ ec2_security_group_egress_rules = {
 
 # 생성을 원하는 N개의 EC2 정보 입력 -> EC2 성격별로 나누면 될 듯(Elasticsearch, Atlantis.. 등등)
 ec2_instance = {
-  "ec2_atlantis" = { # GitOps Atlantis
+  "atlantis" = { # GitOps Atlantis
     create = false
 
     # SSH key pair
@@ -459,8 +499,8 @@ ec2_instance = {
     env                         = "stg"
     script_file_name            = "install_atlantis_dev.sh" # 스크립트 파일명 지정
   },
-  "ec2_jenkins" = { # Jenkins on EC2
-    create = true   # EC2 인스턴스 생성 여부 지정
+  "jenkins" = {   # Jenkins on EC2
+    create = true # EC2 인스턴스 생성 여부 지정
 
     key_pair_name         = "jenkins-ec2-key"
     key_pair_algorithm    = "RSA"
@@ -485,9 +525,20 @@ ec2_instance = {
 # S3 설정
 ################
 s3_bucket = {
-  terraform_state = {
-    bucket_name = "terraform-s3-ymkim-state"
+  terraform-state = {
+    create                 = true                       # 생성 여부 지정
+    bucket_name            = "terraform-s3-ymkim-state" # S3 버킷명
+    versioning             = true                       # S3 버저닝 여부
+    server_side_encryption = true                       # S3 Object 암호화 여부
+    public_access_block    = true                       # S3 Public Access 제한 여부
   },
+  "jenkins" = {
+    create                 = true                       # 생성 여부 지정
+    bucket_name            = "terraform-s3-ymkim-state" # S3 버킷명
+    versioning             = false                      # S3 버저닝 여부
+    server_side_encryption = false                      # S3 Object 암호화 여부
+    public_access_block    = true                       # S3 Public Access 제한 여부
+  }
 }
 
 ################
