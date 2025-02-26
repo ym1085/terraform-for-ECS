@@ -44,10 +44,7 @@ private_subnets_cidr = [
 public_subnet_ids = []
 
 # 프라이빗 서브넷 ID 지정
-# private_subnet_ids = [
-#   "subnet-xxxxxxxx",
-#   "subnet-xxxxxxxx"
-# ]
+private_subnet_ids = []
 
 # DNS Hostname 사용 옵션, 기본 false(VPC 내 리소스가 AWS DNS 주소 사용 가능)
 # DNS 기능 자체를 켤지 말지 정하는 옵션, 키는 경우 VPC에서 DNS 기능 사용 가능
@@ -148,6 +145,46 @@ ecr_repository = {
 }
 
 ####################
+# IAM 설정
+####################
+# TODO: IAM 수정 중
+# iam_role = {
+#   "ecs" = {
+#     "ecs_task_role" = {
+#       "version" = "2012-10-17",
+#       "statement" = [
+#         {
+#           Action = "sts:AssumeRole"
+#           Effect = "Allow"
+#           Principal = {
+#             Service = "ecs-tasks.amazonaws.com"
+#           }
+#         }
+#       ]
+#     },
+#     "ecs_task_exec_role" = {
+#     },
+#     "ecs_auto_scaling_role" = {
+#     }
+#   },
+#   "ec2" = {
+#   }
+# }
+
+# iam_policy = {
+#   "ecs" = {
+#     "ecs_task_role_policy" = {
+#     },
+#     "ecs_task_exec_role_policy" = {
+#     },
+#     "ecs_auto_scaling_role_policy" = {
+#     }
+#   },
+#   "ec2" = {
+#   }
+# }
+
+####################
 # ECS 클러스터 설정
 ####################
 # ECS 클러스터 생성
@@ -164,9 +201,9 @@ ecs_security_group = "core-search-ecs-sg"
 
 # ECS IAM Role
 ecs_task_role               = "ecs_task_role"
-ecs_task_role_policy        = "custom_ecs_task_role_policy"
+ecs_task_role_policy        = "ecs_task_role_policy"
 ecs_task_exec_role          = "ecs_task_exec_role"
-ecs_task_exec_role_policy   = "custom_ecs_task_exec_role_policy"
+ecs_task_exec_role_policy   = "ecs_task_exec_role_policy"
 ecs_auto_scaling_role       = "ecs_auto_scaling_role"
 ecs_auto_scaling_policy_arn = "AmazonEC2ContainerServiceAutoscaleRole" # 기존에 생성되어 있는 정책을 참조
 
@@ -327,20 +364,26 @@ ecs_cpu_scale_out_alert = {
 ################
 # EC2 보안그룹 설정
 ec2_security_group = {
-  "terraform-atlantis-sg" = [
-    {
-      ec2_security_group_name        = "terraform-atlantis-sg"
-      ec2_security_group_description = "Security group for ec2 with terraform atlantis"
-      env                            = "stg"
-    },
-  ],
+  "atlantis-sg" = {
+    create                         = false
+    ec2_security_group_name        = "atlantis-sg"
+    ec2_security_group_description = "Security group for ec2 with atlantis"
+    env                            = "stg"
+  },
+  "jenkins-sg" = {
+    create                         = true
+    ec2_security_group_name        = "jenkins-sg"
+    ec2_security_group_description = "Security group for ec2 with jenkins"
+    env                            = "stg"
+  }
 }
 
 # EC2 보안그룹 규칙 설정
 ec2_security_group_ingress_rules = {
-  "terraform-atlantis-sg-ingress-rule" = [
+  "atlantis-sg-ingress-rule" = [
     {
-      ec2_security_group_name = "terraform-atlantis-sg" # 참조하는 보안그룹 이름을 넣어야 each.key로 구분 가능
+      create                  = false
+      ec2_security_group_name = "atlantis-sg" # 참조하는 보안그룹 이름을 넣어야 each.key로 구분 가능
       type                    = "ingress"
       description             = "EC2 atlantis Github web hook & Desktop enter"
       from_port               = 4141
@@ -356,8 +399,39 @@ ec2_security_group_ingress_rules = {
       env                      = "stg"
     },
     {
-      ec2_security_group_name = "terraform-atlantis-sg"
+      create                  = false
+      ec2_security_group_name = "atlantis-sg"
       description             = "EC2 atlantis ssh enter"
+      type                    = "ingress"
+      from_port               = 22
+      to_port                 = 22
+      protocol                = "tcp"
+      cidr_ipv4 = [
+        "39.118.148.0/24"
+      ]
+      source_security_group_id = null
+      env                      = "stg"
+    }
+  ],
+  "jenkins-sg-ingress-rule" = [
+    {
+      create                  = true
+      ec2_security_group_name = "jenkins-sg"
+      description             = "EC2 jenkins service port"
+      type                    = "ingress"
+      from_port               = 8080
+      to_port                 = 8080
+      protocol                = "tcp"
+      cidr_ipv4 = [
+        "39.118.148.0/24"
+      ]
+      source_security_group_id = null
+      env                      = "stg"
+    },
+    {
+      create                  = true
+      ec2_security_group_name = "jenkins-sg"
+      description             = "EC2 jenkins ssh enter"
       type                    = "ingress"
       from_port               = 22
       to_port                 = 22
@@ -372,9 +446,24 @@ ec2_security_group_ingress_rules = {
 }
 
 ec2_security_group_egress_rules = {
-  "terraform-atlantis-sg-egress-rule" = [
+  "atlantis-sg-egress-rule" = [
     {
-      ec2_security_group_name  = "terraform-atlantis-sg"
+      create                   = false
+      ec2_security_group_name  = "atlantis-sg"
+      description              = "Allow all outbound traffic"
+      type                     = "egress"
+      from_port                = 0
+      to_port                  = 0
+      protocol                 = "-1"          # 모든 프로토콜 허용
+      cidr_ipv4                = ["0.0.0.0/0"] # 모든 IP로 트래픽 허용
+      source_security_group_id = null
+      env                      = "stg"
+    }
+  ],
+  "jenkins-sg-egress-rule" = [
+    {
+      create                   = true
+      ec2_security_group       = "jenkins-sg"
       description              = "Allow all outbound traffic"
       type                     = "egress"
       from_port                = 0
@@ -389,21 +478,46 @@ ec2_security_group_egress_rules = {
 
 # 생성을 원하는 N개의 EC2 정보 입력 -> EC2 성격별로 나누면 될 듯(Elasticsearch, Atlantis.. 등등)
 ec2_instance = {
-  "ec2_atlantis" = {
+  "atlantis" = { # GitOps Atlantis
+    create = false
+
     # SSH key pair
-    key_pair_name         = "terraform-atlantis-key"
+    key_pair_name         = "atlantis-ec2-key"
     key_pair_algorithm    = "RSA"
     rsa_bits              = 4096
-    local_file_name       = "keypair/terraform-atlantis-key.pem" # terraform key pair 생성 후 저장 경로 modules/aws/compute/ec2/...
-    local_file_permission = "0600"                               # 6(read + writer)00
+    local_file_name       = "keypair/atlantis-ec2-key.pem" # terraform key pair 생성 후 저장 경로 modules/aws/compute/ec2/...
+    local_file_permission = "0600"                         # 6(read + writer)00
 
-    # ECS Option
+    # EC2 Option
     instance_type               = "t2.micro"
+    subnet_type                 = "public"
+    availability_zones          = "ap-northeast-2a"
     associate_public_ip_address = true
     disable_api_termination     = true
-    ec2_instance_name           = "ec2-atlantis"
-    ec2_security_group_name     = "terraform-atlantis-sg"
+    ec2_instance_name           = "atlantis-ec2"
+    ec2_security_group_name     = "atlantis-sg"
     env                         = "stg"
+    script_file_name            = "install_atlantis_dev.sh" # 스크립트 파일명 지정
+  },
+  "jenkins" = {   # Jenkins on EC2
+    create = true # EC2 인스턴스 생성 여부 지정
+
+    key_pair_name         = "jenkins-ec2-key"
+    key_pair_algorithm    = "RSA"
+    rsa_bits              = 4096
+    local_file_name       = "keypair/jenkins-ec2-key.pem" # terraform key pair 생성 후 저장 경로 modules/aws/compute/ec2/...
+    local_file_permission = "0600"                        # 6(read + writer)00
+
+    # EC2 Option
+    instance_type               = "t2.micro"        # EC2 인스턴스 타입 지정
+    subnet_type                 = "private"         # Jenkins는 Private에 위치하고, ELB를 통해 접속
+    availability_zones          = "ap-northeast-2a" # Private A zone에 위치
+    associate_public_ip_address = true              # EC2 퍼블릭 IP 자동 할당 여부 지정
+    disable_api_termination     = true              # API 기반 EC2 삭제 disabled
+    ec2_instance_name           = "jenkins-ec2"     # EC2 인스턴스명
+    ec2_security_group_name     = "jenkins-sg"      # EC2 인스턴스 보안그룹명
+    env                         = "stg"
+    script_file_name            = "install_jenkins.sh" # 스크립트 파일명 지정
   }
 }
 
@@ -411,9 +525,20 @@ ec2_instance = {
 # S3 설정
 ################
 s3_bucket = {
-  terraform_state = {
-    bucket_name = "terraform-s3-ymkim-state"
+  terraform-state = {
+    create                 = true                       # 생성 여부 지정
+    bucket_name            = "terraform-s3-ymkim-state" # S3 버킷명
+    versioning             = true                       # S3 버저닝 여부
+    server_side_encryption = true                       # S3 Object 암호화 여부
+    public_access_block    = true                       # S3 Public Access 제한 여부
   },
+  "jenkins" = {
+    create                 = true                       # 생성 여부 지정
+    bucket_name            = "terraform-s3-ymkim-state" # S3 버킷명
+    versioning             = false                      # S3 버저닝 여부
+    server_side_encryption = false                      # S3 Object 암호화 여부
+    public_access_block    = true                       # S3 Public Access 제한 여부
+  }
 }
 
 ################
