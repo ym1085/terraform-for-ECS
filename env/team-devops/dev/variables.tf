@@ -76,10 +76,10 @@ variable "public_subnet_ids" {
 }
 
 # 프라이빗 서브넷 ID
-# variable "private_subnet_ids" {
-#   description = "프라이빗 서브넷 대역 ID([subnet-xxxxxxxx, subnet-xxxxxxxx])"
-#   type        = list(string)
-# }
+variable "private_subnet_ids" {
+  description = "프라이빗 서브넷 대역 ID([subnet-xxxxxxxx, subnet-xxxxxxxx])"
+  type        = list(string)
+}
 
 # DNS Hostname 사용 옵션, 기본 false(VPC 내 리소스가 AWS DNS 주소 사용 가능)
 variable "enable_dns_support" {
@@ -367,17 +367,19 @@ variable "ecs_cpu_scale_out_alert" {
 # EC2 보안그룹 설정
 variable "ec2_security_group" {
   description = "EC2 보안그룹 생성"
-  type = map(list(object({
+  type = map(object({
+    create                         = optional(bool, true) # 기본값 true
     ec2_security_group_name        = optional(string)
     ec2_security_group_description = optional(string)
     env                            = optional(string)
-  })))
+  }))
 }
 
 # EC2 보안그룹 규칙 설정
 variable "ec2_security_group_ingress_rules" {
   description = "EC2 보안그룹 Ingress 규칙 생성"
   type = map(list(object({
+    create                   = optional(bool, true)
     ec2_security_group_name  = optional(string)       # 참조하는 보안그룹 이름 지정
     description              = optional(string)       # 보안그룹 규칙 설명
     type                     = optional(string)       # ingress, egress
@@ -393,6 +395,7 @@ variable "ec2_security_group_ingress_rules" {
 variable "ec2_security_group_egress_rules" {
   description = "EC2 보안그룹 Egress 규칙 생성"
   type = map(list(object({
+    create                   = optional(bool, true)
     ec2_security_group_name  = optional(string)       # 참조하는 보안그룹 이름 지정
     description              = optional(string)       # 보안그룹 규칙 설명
     type                     = optional(string)       # ingress, egress
@@ -409,6 +412,9 @@ variable "ec2_security_group_egress_rules" {
 variable "ec2_instance" {
   description = "EC2 생성 정보 입력"
   type = map(object({
+    # Option
+    create = bool # EC2 인스턴스 생성 여부 지정
+
     # SSH key pair
     key_pair_name         = string
     key_pair_algorithm    = string
@@ -418,11 +424,14 @@ variable "ec2_instance" {
 
     # ECS Option
     instance_type               = string
+    subnet_type                 = string
+    availability_zones          = string
     associate_public_ip_address = bool
     disable_api_termination     = bool
     ec2_instance_name           = string
     ec2_security_group_name     = string
     env                         = string
+    script_file_name            = optional(string)
   }))
 }
 
@@ -432,7 +441,11 @@ variable "ec2_instance" {
 variable "s3_bucket" {
   description = "생성하고자 하는 S3 버킷 정보 기재"
   type = map(object({
-    bucket_name = string
+    create                 = bool
+    bucket_name            = string
+    versioning             = bool
+    server_side_encryption = bool
+    public_access_block    = bool
   }))
 }
 
