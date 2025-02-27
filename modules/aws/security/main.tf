@@ -1,111 +1,57 @@
-# ECS Task Role 생성
-resource "aws_iam_role" "ecs_task_role" {
-  name = var.ecs_task_role
+# FIXME: IAM Role도 FOR - LOOP로 처리하는게 맞을지 모르겠음..
+# IAM은 아무래도 수정이 계속 발생할 것 같기도 하고..
+
+# AmazonEC2ContainerServiceAutoscaleRole
+data "aws_iam_policy" "ecs_auto_scaling_policy" {
+  name = var.ecs_auto_scaling_policy_arn
+}
+
+# IAM Role 생성
+resource "aws_iam_role" "iam_role" {
+  for_each = {
+    for role in flatten([
+      for role_key, role_values in var.iam_role : [
+        for role in role_values : role
+      ]
+    ]) : role.name => role
+  }
+
+  name = each.value.name
   assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = "ecs-tasks.amazonaws.com"
-        }
-      }
-    ]
+    Version   = each.value.version
+    Statement = each.value.statement
   })
 }
 
-# ECS Task Role Policy 생성
-resource "aws_iam_policy" "ecs_task_role_policy" {
-  name = var.ecs_task_role_policy
+# IAM Policy 생성
+resource "aws_iam_policy" "iam_policy" {
+  for_each = {
+    for policy in flatten([
+      for policy_key, policy_values in var.iam_policy : [
+        for policy in policy_values : policy
+      ]
+    ]) : policy.name => policy
+  }
+
+  name = each.value.name
   policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = [
-          "s3:ListBucket",
-          "s3:GetObject",
-          "s3:PutObject",
-        ]
-        Effect   = "Allow"
-        Resource = "*"
-      }
-    ]
+    Version   = each.value.version
+    Statement = each.value.statement
   })
 }
 
-# ECS Task Role Attachment
-resource "aws_iam_role_policy_attachment" "ecs_task_role_attachment" {
-  role       = aws_iam_role.ecs_task_role.name
-  policy_arn = aws_iam_policy.ecs_task_role_policy.arn
-}
+# IAM Role에 Policy Attachment
+resource "aws_iam_role_policy_attachment" "iam_attachment" {
+  for_each = {
+    for policy_attachment in flatten([
+      for policy_attachment_key, policy_attachment_values in var.iam_policy_attachment : [
+        for policy_attachment in policy_attachment_values : merge({ policy_type = policy_attachment_key }, policy_attachment)
+      ]
+    ]) : "${policy_attachment.policy_type}-${policy_attachment.role}" => policy_attachment
+  }
 
-# ECS Task Exec Role 생성
-resource "aws_iam_role" "ecs_task_exec_role" {
-  name = var.ecs_task_exec_role
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole",
-        Effect = "Allow",
-        Principal = {
-          Service = "ecs-tasks.amazonaws.com"
-        }
-      }
-    ]
-  })
-}
-
-# ECS Task Exec Role Policy 생성
-resource "aws_iam_policy" "ecs_task_exec_role_policy" {
-  name        = var.ecs_task_exec_role_policy
-  description = var.ecs_task_exec_role_policy
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = [
-          "ecr:GetAuthorizationToken",
-          "ecr:BatchCheckLayerAvailability",
-          "ecr:GetDownloadUrlForLayer",
-          "ecr:BatchGetImage",
-          "ecr:GetRepositoryPolicy",
-          "ecr:DescribeRepositories",
-          "ecr:ListImages",
-          "logs:CreateLogGroup",
-          "logs:CreateLogStream",
-          "logs:PutLogEvents",
-        ],
-        Effect   = "Allow",
-        Resource = "*"
-      }
-    ]
-  })
-}
-
-# ECS Task Exec Role Attachment
-resource "aws_iam_role_policy_attachment" "ecs_task_exec_role_policy" {
-  role       = aws_iam_role.ecs_task_exec_role.name
-  policy_arn = aws_iam_policy.ecs_task_exec_role_policy.arn
-}
-
-# ECS AutoScaling 관련 IAM Role 생성
-resource "aws_iam_role" "ecs_auto_scaling_role" {
-  name = var.ecs_auto_scaling_role
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Sid    = "AutoScaling"
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = "application-autoscaling.amazonaws.com"
-        }
-      }
-    ]
-  })
+  role       = aws_iam_role.iam_role[each.value.role].name
+  policy_arn = aws_iam_policy.iam_policy[each.value.policy].arn
 }
 
 # ECS AutoScaling Role에 Auto Scaling 관련 Policy(정책) 연결

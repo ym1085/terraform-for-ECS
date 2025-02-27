@@ -52,6 +52,11 @@ module "ecr" {
 module "security" {
   source = "../../../modules/aws/security"
 
+  # IAM 관련 설정
+  iam_role              = var.iam_role
+  iam_policy            = var.iam_policy
+  iam_policy_attachment = var.iam_policy_attachment
+
   # ECS IAM 관련 설정
   ecs_task_role               = var.ecs_task_role
   ecs_task_role_policy        = var.ecs_task_role_policy

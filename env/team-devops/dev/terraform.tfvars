@@ -147,64 +147,117 @@ ecr_repository = {
 ####################
 # IAM 설정
 ####################
-# TODO: IAM 수정 중
-# iam_role = {
-#   "ecs" = [
-#     {
-#       "name"    = "ecs-task-role",
-#       "version" = "2012-10-17",
-#       "statement" = [
-#         {
-#           Action = "sts:AssumeRole"
-#           Effect = "Allow"
-#           Principal = {
-#             Service = "ecs-tasks.amazonaws.com"
-#           }
-#         }
-#       ]
-#     },
-#     {
-#       "name"    = "ecs-task-exec-role",
-#       "version" = "2021-10-17",
-#       "statement" = [
-#         {
-#           Action = "sts:AssumeRole",
-#           Effect = "Allow",
-#           Principal = {
-#             Service = "ecs-tasks.amazonaws.com"
-#           }
-#         }
-#       ]
-#     },
-#     {
-#       "name"    = "ecs-auto-scaling-role",
-#       "version" = "2012-10-17",
-#       "statement" = [
-#         {
-#           Sid    = "AutoScaling"
-#           Action = "sts:AssumeRole"
-#           Effect = "Allow"
-#           Principal = {
-#             Service = "application-autoscaling.amazonaws.com"
-#           }
-#         }
-#       ]
-#     }
-#   ]
-# }
+iam_role = {
+  "ecs" = [
+    {
+      name    = "ecs-task-role",
+      version = "2012-10-17",
+      statement = [
+        {
+          action = "sts:AssumeRole"
+          effect = "Allow"
+          principal = {
+            service = "ecs-tasks.amazonaws.com"
+          }
+        }
+      ]
+    },
+    {
+      name    = "ecs-task-exec-role",
+      version = "2021-10-17",
+      statement = [
+        {
+          action = "sts:AssumeRole",
+          effect = "Allow",
+          principal = {
+            service = "ecs-tasks.amazonaws.com"
+          }
+        }
+      ]
+    },
+    {
+      name    = "ecs-auto-scaling-role",
+      version = "2012-10-17",
+      statement = [
+        {
+          sid    = "AutoScaling"
+          action = "sts:AssumeRole"
+          effect = "Allow"
+          principal = {
+            service = "application-autoscaling.amazonaws.com"
+          }
+        }
+      ]
+    }
+  ]
+}
 
-# iam_policy = {
-#   "ecs" = {
-#     "ecs-task-role-policy" = {
-#     },
-#     "ecs-task-exec-role-policy" = {
-#     },
-#     "ecs-auto-scaling-role-policy" = {
-#     }
-#   },
-#   "ec2" = {
-#   }
-# }
+iam_policy = {
+  "ecs" = [
+    {
+      name        = "ecs-task-policy",
+      description = "ECS task policy"
+      version     = "2012-10-17",
+      statement = [
+        {
+          action = [
+            "s3:ListBucket",
+            "s3:GetObject",
+            "s3:PutObject",
+          ],
+          effect   = "Allow"
+          resource = ["*"]
+        }
+      ]
+    },
+    {
+      name        = "ecs-task-exec-policy",
+      description = "ECS Task Exec Policy",
+      version     = "2012-10-17",
+      statement = [
+        {
+          action = [
+            "ecr:GetAuthorizationToken",
+            "ecr:BatchCheckLayerAvailability",
+            "ecr:GetDownloadUrlForLayer",
+            "ecr:BatchGetImage",
+            "ecr:GetRepositoryPolicy",
+            "ecr:DescribeRepositories",
+            "ecr:ListImages",
+            "logs:CreateLogGroup",
+            "logs:CreateLogStream",
+            "logs:PutLogEvents",
+          ],
+          effect   = "Allow",
+          resource = ["*"]
+        }
+      ]
+    },
+    {
+      name        = "ecs-auto-scaling-policy",
+      description = "ECS Auto Scaling Policy",
+      version     = "2012-10-17",
+      statement   = []
+    }
+  ]
+}
+
+iam_policy_attachment = {
+  "ecs" = [
+    {
+      role   = "ecs-task-role",
+      policy = "ecs-task-policy"
+    },
+    {
+      role   = "ecs-task-exec-role",
+      policy = "ecs-task-exec-policy"
+    },
+    {
+      role   = "ecs-auto-scaling-role",
+      policy = "ecs-auto-scaling-policy"
+    }
+  ]
+}
 
 ####################
 # ECS 클러스터 설정
