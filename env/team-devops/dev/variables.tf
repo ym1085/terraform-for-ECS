@@ -186,6 +186,22 @@ variable "ecr_repository" {
 }
 
 ####################
+# IAM 설정
+####################
+variable "iam_role" {
+  description = "IAM ROLE 설정"
+  type = map(list(object({
+    name = string
+    version = string
+    statement = list(object({
+      action = optional(string)
+      effect = optional(string)
+      principal = optional()
+    }))
+  })))
+}
+
+####################
 # ECS 클러스터 설정
 ####################
 # ECS 클러스터 생성

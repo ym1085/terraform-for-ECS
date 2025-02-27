@@ -149,8 +149,9 @@ ecr_repository = {
 ####################
 # TODO: IAM 수정 중
 # iam_role = {
-#   "ecs" = {
-#     "ecs_task_role" = {
+#   "ecs" = [
+#     {
+#       "name"    = "ecs-task-role",
 #       "version" = "2012-10-17",
 #       "statement" = [
 #         {
@@ -162,22 +163,43 @@ ecr_repository = {
 #         }
 #       ]
 #     },
-#     "ecs_task_exec_role" = {
+#     {
+#       "name"    = "ecs-task-exec-role",
+#       "version" = "2021-10-17",
+#       "statement" = [
+#         {
+#           Action = "sts:AssumeRole",
+#           Effect = "Allow",
+#           Principal = {
+#             Service = "ecs-tasks.amazonaws.com"
+#           }
+#         }
+#       ]
 #     },
-#     "ecs_auto_scaling_role" = {
+#     {
+#       "name"    = "ecs-auto-scaling-role",
+#       "version" = "2012-10-17",
+#       "statement" = [
+#         {
+#           Sid    = "AutoScaling"
+#           Action = "sts:AssumeRole"
+#           Effect = "Allow"
+#           Principal = {
+#             Service = "application-autoscaling.amazonaws.com"
+#           }
+#         }
+#       ]
 #     }
-#   },
-#   "ec2" = {
-#   }
+#   ]
 # }
 
 # iam_policy = {
 #   "ecs" = {
-#     "ecs_task_role_policy" = {
+#     "ecs-task-role-policy" = {
 #     },
-#     "ecs_task_exec_role_policy" = {
+#     "ecs-task-exec-role-policy" = {
 #     },
-#     "ecs_auto_scaling_role_policy" = {
+#     "ecs-auto-scaling-role-policy" = {
 #     }
 #   },
 #   "ec2" = {
