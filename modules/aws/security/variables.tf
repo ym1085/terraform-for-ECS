@@ -7,6 +7,8 @@ variable "iam_role" {
     name        = optional(string)
     description = optional(string)
     version     = optional(string)
+    existing    = optional(bool, false) # 기존 역할 여부 (true면 생성 안 함)
+    arn         = optional(string, "")  # 기존 역할 ARN (기존 Role일 경우 필수)
     statement = list(object({
       action = optional(string)
       effect = optional(string)
@@ -23,6 +25,8 @@ variable "iam_policy" {
     name        = optional(string)
     description = optional(string)
     version     = optional(string)
+    existing    = optional(bool, false) # 기존 정책 여부
+    arn         = optional(string, "")  # 기존 정책 ARN (기존 Policy일 경우 필수)
     statement = optional(list(object({
       action   = optional(list(string))
       effect   = optional(string)

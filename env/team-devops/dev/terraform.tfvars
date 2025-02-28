@@ -150,8 +150,10 @@ ecr_repository = {
 iam_role = {
   "ecs" = [
     {
-      name    = "ecs-task-role",
-      version = "2012-10-17",
+      name     = "ecs-task-role",
+      version  = "2012-10-17",
+      existing = false
+      arn      = ""
       statement = [
         {
           action = "sts:AssumeRole"
@@ -163,8 +165,10 @@ iam_role = {
       ]
     },
     {
-      name    = "ecs-task-exec-role",
-      version = "2021-10-17",
+      name     = "ecs-task-exec-role",
+      version  = "2021-10-17",
+      existing = false
+      arn      = ""
       statement = [
         {
           action = "sts:AssumeRole",
@@ -176,8 +180,10 @@ iam_role = {
       ]
     },
     {
-      name    = "ecs-auto-scaling-role",
-      version = "2012-10-17",
+      name     = "ecs-auto-scaling-role",
+      version  = "2012-10-17",
+      existing = true
+      arn      = ""
       statement = [
         {
           sid    = "AutoScaling"
