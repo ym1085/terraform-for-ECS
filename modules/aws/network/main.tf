@@ -50,7 +50,7 @@ resource "aws_internet_gateway" "igw" {
 
 # NAT 게이트웨이 EIP 생성 -> public subnet 01 대역에 위치
 resource "aws_eip" "ngw_eip" {
-  vpc = true # VPC에서 사용
+  domain = "vpc"
 
   # IGW 생성 후 EIP가 생성될 수 있게 의존성 설정
   depends_on = [

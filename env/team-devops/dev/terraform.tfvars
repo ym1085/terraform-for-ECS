@@ -128,7 +128,7 @@ target_group = {
 ####################
 # ECR 리포지토리 생성
 ecr_repository = {
-  "core-search-api-server" : {
+  "core-search-api-server" = {
     ecr_repository_name      = "core-search-api-server" # 리포지토리명
     env                      = "stg"                    # ECR 개발환경
     ecr_image_tag_mutability = "IMMUTABLE"              # image 버전 고유하게 관리할지 여부
@@ -147,42 +147,138 @@ ecr_repository = {
 ####################
 # IAM 설정
 ####################
-# TODO: IAM 수정 중
-# iam_role = {
-#   "ecs" = {
-#     "ecs_task_role" = {
-#       "version" = "2012-10-17",
-#       "statement" = [
-#         {
-#           Action = "sts:AssumeRole"
-#           Effect = "Allow"
-#           Principal = {
-#             Service = "ecs-tasks.amazonaws.com"
-#           }
-#         }
-#       ]
-#     },
-#     "ecs_task_exec_role" = {
-#     },
-#     "ecs_auto_scaling_role" = {
-#     }
-#   },
-#   "ec2" = {
-#   }
-# }
+# 사용자가 생성하는 역할(Role)
+iam_custom_role = {
+  "ecs-task-role" = {
+    name    = "ecs-task-role"
+    version = "2012-10-17"
+    arn     = ""
+    statement = {
+      Sid    = "Role for ecs service access other aws services"
+      Action = "sts:AssumeRole"
+      Effect = "Allow"
+      Principal = {
+        Service = "ecs-tasks.amazonaws.com"
+      }
+    }
+    env = "stg"
+  },
+  "ecs-task-exec-role" = {
+    name    = "ecs-task-exec-role"
+    version = "2021-10-17"
+    arn     = ""
+    statement = {
+      Sid    = "Role for ecs fargate Agent execute ecs task"
+      Action = "sts:AssumeRole"
+      Effect = "Allow"
+      Principal = {
+        Service = "ecs-tasks.amazonaws.com"
+      }
+    }
+    env = "stg"
+  },
+  "ecs-auto-scaling-role" = {
+    name    = "ecs-auto-scaling-role"
+    version = "2012-10-17"
+    arn     = ""
+    statement = {
+      Sid    = "Role for autoscaling ecs task"
+      Action = "sts:AssumeRole"
+      Effect = "Allow"
+      Principal = {
+        Service = "application-autoscaling.amazonaws.com"
+      }
+    }
+    env = "stg"
+  }
+}
 
-# iam_policy = {
-#   "ecs" = {
-#     "ecs_task_role_policy" = {
-#     },
-#     "ecs_task_exec_role_policy" = {
-#     },
-#     "ecs_auto_scaling_role_policy" = {
-#     }
-#   },
-#   "ec2" = {
-#   }
-# }
+# 사용자가 생성하는 정책(Policy)
+iam_custom_policy = {
+  "ecs-task-role-policy" = {
+    name        = "ecs-task-role-policy"
+    description = "Policy For ECS Task Role"
+    version     = "2012-10-17"
+    statement = {
+      Sid = "Policies for attaching to ecs task role"
+      Action = [
+        "s3:ListBucket",
+        "s3:GetObject",
+        "s3:PutObject"
+      ]
+      Effect = "Allow"
+      Resource = [
+        "*"
+      ]
+    }
+    env = "stg"
+  },
+  "ecs-task-exec-role-policy" = {
+    name        = "ecs-task-exec-role-policy"
+    description = "Policy For ECS Task Execution Role"
+    version     = "2012-10-17"
+    statement = {
+      Sid = "Policies for attaching to ecs task execute role"
+      Action = [
+        "ecr:GetAuthorizationToken",
+        "ecr:BatchCheckLayerAvailability",
+        "ecr:GetDownloadUrlForLayer",
+        "ecr:BatchGetImage",
+        "ecr:GetRepositoryPolicy",
+        "ecr:DescribeRepositories",
+        "ecr:ListImages",
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+      ]
+      Effect = "Allow"
+      Resource = [
+        "*"
+      ] # TODO: 범위 좁혀야함
+    }
+    env = "stg"
+  }
+}
+
+/*
+  기존 AWS에서 제공되는 정책 사용(Policy) - data "aws_iam_policy" "existing_policy" { }
+  아래 변수의 경우 Policy를 사용하기는 하는데, 기존 AWS Managed Policy를 사용하는 경우 사용하는 변수
+*/
+iam_managed_policy = {
+  "ecs-auto-scaling-role-policy" = {
+    name = "AmazonEC2ContainerServiceAutoscaleRole"
+    arn  = "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceAutoscaleRole"
+    env  = "stg"
+  }
+}
+
+/*
+  Role, Policy 생성 후 Role에 Policy를 연동할 때 사용하는 변수로,
+  policy_type의 경우 아래와 같이 구분해서 사용한다.
+
+  role_name, policy_name은 iam_custom_role, iam_custom_policy, iam_managed_policy,
+  Map 변수의 key 이름과 반드시 동일하게 설정 해주어야 한다.
+
+  - custom: 사용자가 생성한 policy
+  - managed: AWS에서 제공하는 managed policy
+*/
+iam_policy_attachment = {
+  "ecs-task-role-attachment" = {
+    role_name   = "ecs-task-role"
+    policy_name = "ecs-task-role-policy"
+    policy_type = "custom"
+  },
+  "ecs-task-exec-role" = {
+    role_name   = "ecs-task-exec-role"
+    policy_name = "ecs-task-exec-role-policy"
+    policy_type = "custom"
+  },
+  "ecs-auto-scaling-role" = {
+    role_name   = "ecs-auto-scaling-role"
+    policy_name = "ecs-auto-scaling-role-policy"
+    policy_type = "managed"
+  }
+}
 
 ####################
 # ECS 클러스터 설정
@@ -192,7 +288,7 @@ ecs_cluster = {
   "core-search-cluster" = {
     cluster_name = "core-search-cluster"
     env          = "stg"
-  },
+  }
 }
 
 # ECS Security Group 
@@ -247,7 +343,7 @@ ecs_task_definitions = {
           interval = 30
           timeout  = 10
           retries  = 3
-        },
+        }
         env = "stg"
       },
       {
@@ -279,10 +375,10 @@ ecs_service = {
     service_role                  = "AWSServiceRoleForECS"
     deployment_controller         = "ECS"
     cluster_name                  = "core-search-cluster"
-    service_name                  = "core-search-service",    # 서비스 이름
-    desired_count                 = 1,                        # Task 개수
-    container_name                = "core-search-api-server", # 컨테이너 이름
-    container_port                = 8080,                     # 컨테이너 포트
+    service_name                  = "core-search-service"     # 서비스 이름
+    desired_count                 = 1                         # Task 개수
+    container_name                = "core-search-api-server"  # 컨테이너 이름
+    container_port                = 8080                      # 컨테이너 포트
     task_definitions              = "core-search-td"          # 테스크 지정
     env                           = "stg"                     # ECS Service 환경변수
     health_check_grace_period_sec = 120                       # 헬스 체크 그레이스 기간
