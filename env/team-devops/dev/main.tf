@@ -53,8 +53,9 @@ module "security" {
   source = "../../../modules/aws/security"
 
   # IAM 관련 설정
-  iam_role              = var.iam_role
-  iam_policy            = var.iam_policy
+  iam_custom_role       = var.iam_custom_role
+  iam_custom_policy     = var.iam_custom_policy
+  iam_managed_policy    = var.iam_managed_policy
   iam_policy_attachment = var.iam_policy_attachment
 
   # ECS IAM 관련 설정
@@ -64,6 +65,9 @@ module "security" {
   ecs_task_exec_role_policy   = var.ecs_task_exec_role_policy
   ecs_auto_scaling_role       = var.ecs_auto_scaling_role
   ecs_auto_scaling_policy_arn = var.ecs_auto_scaling_policy_arn
+
+  # 프로젝트 기본 설정
+  tags = var.tags
 }
 
 module "ecs" {
@@ -85,14 +89,14 @@ module "ecs" {
   ecs_cpu_scale_out_alert          = var.ecs_cpu_scale_out_alert          # ECS AutoScaling Alert
 
   # ECS IAM 권한 설정
-  ecs_task_role_arn           = module.security.ecs_task_role_arn      # task role arn
-  ecs_task_exec_role_arn      = module.security.ecs_task_exec_role_arn # task exec role arn
-  ecs_security_group          = var.ecs_security_group                 # ECS Service 보안그룹 지정
-  ecs_container_image_version = var.ecs_container_image_version        # ECS Container Image 버전
+  ecs_task_role_arn           = module.security.iam_resources["ecs-task-role-arn"]      # security module의 output 변수 사용
+  ecs_task_exec_role_arn      = module.security.iam_resources["ecs-task-exec-role-arn"] # security module의 output 변수 사용
+  ecs_security_group          = var.ecs_security_group                                  # ECS Service 보안그룹 지정
+  ecs_container_image_version = var.ecs_container_image_version                         # ECS Container Image 버전
 
   # ECS Service에서 ELB 연동 시 사용
-  alb_tg_arn            = module.load_balancer.alb_target_group_arn  # Loadbalancer의 output 변수 사용
-  alb_listener_arn      = module.load_balancer.alb_listener_arn      # Loadbalancer의 output 변수 사용
+  alb_tg_arn            = module.load_balancer.alb_target_group_arn  # loadbalancer module의 output 변수 사용
+  alb_listener_arn      = module.load_balancer.alb_listener_arn      # loadbalancer module의 output 변수 사용
   alb_security_group_id = module.load_balancer.alb_security_group_id # ECS에서 사용하는 ALB 보안 그룹 ID
 
   # 프로젝트 기본 설정

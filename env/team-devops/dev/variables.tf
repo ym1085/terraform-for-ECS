@@ -188,46 +188,58 @@ variable "ecr_repository" {
 ####################
 # IAM 설정
 ####################
-variable "iam_role" {
-  description = "IAM ROLE 설정"
-  type = map(list(object({
+variable "iam_custom_role" {
+  description = "IAM Role 생성"
+  type = map(object({
     name        = optional(string)
     description = optional(string)
     version     = optional(string)
-    existing    = optional(bool, false) # 기존 역할 여부 (true면 생성 안 함)
-    arn         = optional(string, "")  # 기존 역할 ARN (기존 Role일 경우 필수)
-    statement = list(object({
-      action = optional(string)
-      effect = optional(string)
-      principal = optional(object({
-        service = optional(string)
-      }))
-    }))
-  })))
+    statement = object({
+      Sid    = optional(string)
+      Action = string
+      Effect = string
+      Principal = object({
+        Service = string
+      })
+    })
+    env = string
+  }))
 }
 
-variable "iam_policy" {
-  description = "IAM POLICY 설정"
-  type = map(list(object({
+# 사용자가 생성하는 정책
+variable "iam_custom_policy" {
+  description = "IAM 사용자 생성 정책"
+  type = map(object({
     name        = optional(string)
     description = optional(string)
     version     = optional(string)
-    existing    = optional(bool, false) # 기존 정책 여부
-    arn         = optional(string, "")  # 기존 정책 ARN (기존 Policy일 경우 필수)
-    statement = optional(list(object({
-      action   = optional(list(string))
-      effect   = optional(string)
-      resource = optional(list(string))
-    })))
-  })))
+    statement = optional(object({
+      Sid      = optional(string)
+      Action   = optional(list(string))
+      Effect   = optional(string)
+      Resource = optional(list(string))
+    }))
+    env = string
+  }))
+}
+
+# 관리형 정책
+variable "iam_managed_policy" {
+  description = "IAM 관리형 정책"
+  type = map(object({
+    name = string
+    arn  = string
+    env  = string
+  }))
 }
 
 variable "iam_policy_attachment" {
-  description = "IAM POLICY ATTACHMENT"
-  type = map(list(object({
-    role   = optional(string)
-    policy = optional(string)
-  })))
+  description = "IAM Policy를 Role에 연결"
+  type = map(object({
+    role_name   = optional(string)
+    policy_name = optional(string)
+    policy_type = optional(string)
+  }))
 }
 
 ####################
