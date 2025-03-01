@@ -8,7 +8,7 @@ output "debug_network_module" {
     private_subnets_cidr = var.private_subnets_cidr
     availability_zones   = var.availability_zones
   }
-  sensitive = false
+  sensitive = true
 }
 
 output "debug_load_balancer_module" {
@@ -21,7 +21,7 @@ output "debug_load_balancer_module" {
     alb_security_group = var.alb_security_group
     public_subnet_ids  = module.network.public_subnet_ids
   }
-  sensitive = false
+  sensitive = true
 }
 
 output "debug_ecr_module" {
@@ -29,7 +29,7 @@ output "debug_ecr_module" {
   value = {
     ecr_repository = var.ecr_repository
   }
-  sensitive = false
+  sensitive = true
 }
 
 output "debug_security_module" {
@@ -42,7 +42,7 @@ output "debug_security_module" {
     ecs_auto_scaling_role       = var.ecs_auto_scaling_role
     ecs_auto_scaling_policy_arn = var.ecs_auto_scaling_policy_arn
   }
-  sensitive = false
+  sensitive = true
 }
 
 output "debug_compute_module" {
@@ -70,7 +70,7 @@ output "debug_compute_module" {
     alb_listener_arn      = module.load_balancer.alb_listener_arn
     alb_security_group_id = module.load_balancer.alb_security_group_id
   }
-  sensitive = false
+  sensitive = true
 }
 
 output "debug_ec2" {
@@ -87,7 +87,7 @@ output "debug_ec2" {
     env  = var.env
     tags = var.tags
   }
-  sensitive = false
+  sensitive = true
 }
 
 output "debug_storage_module" {
@@ -95,5 +95,5 @@ output "debug_storage_module" {
   value = {
     s3_bucket = var.s3_bucket
   }
-  sensitive = false
+  sensitive = true
 }

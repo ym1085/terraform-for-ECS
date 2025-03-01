@@ -154,7 +154,7 @@ iam_custom_role = {
     version = "2012-10-17"
     arn     = ""
     statement = {
-      Sid    = "Role for ecs service access other aws services"
+      Sid    = "ECSTaskRole"
       Action = "sts:AssumeRole"
       Effect = "Allow"
       Principal = {
@@ -165,10 +165,10 @@ iam_custom_role = {
   },
   "ecs-task-exec-role" = {
     name    = "ecs-task-exec-role"
-    version = "2021-10-17"
+    version = "2012-10-17"
     arn     = ""
     statement = {
-      Sid    = "Role for ecs fargate Agent execute ecs task"
+      Sid    = "ECSTaskExecRole"
       Action = "sts:AssumeRole"
       Effect = "Allow"
       Principal = {
@@ -182,7 +182,7 @@ iam_custom_role = {
     version = "2012-10-17"
     arn     = ""
     statement = {
-      Sid    = "Role for autoscaling ecs task"
+      Sid    = "ECSAutoScalingRole"
       Action = "sts:AssumeRole"
       Effect = "Allow"
       Principal = {
@@ -200,7 +200,7 @@ iam_custom_policy = {
     description = "Policy For ECS Task Role"
     version     = "2012-10-17"
     statement = {
-      Sid = "Policies for attaching to ecs task role"
+      Sid = "ECSTaskRolePolicy"
       Action = [
         "s3:ListBucket",
         "s3:GetObject",
@@ -218,7 +218,7 @@ iam_custom_policy = {
     description = "Policy For ECS Task Execution Role"
     version     = "2012-10-17"
     statement = {
-      Sid = "Policies for attaching to ecs task execute role"
+      Sid = "ECSTaskExecRolePolicy"
       Action = [
         "ecr:GetAuthorizationToken",
         "ecr:BatchCheckLayerAvailability",
@@ -622,18 +622,18 @@ ec2_instance = {
 ################
 s3_bucket = {
   terraform-state = {
-    create                 = true                       # 생성 여부 지정
-    bucket_name            = "terraform-s3-ymkim-state" # S3 버킷명
-    versioning             = true                       # S3 버저닝 여부
-    server_side_encryption = true                       # S3 Object 암호화 여부
-    public_access_block    = true                       # S3 Public Access 제한 여부
+    create                 = true                               # 생성 여부 지정
+    bucket_name            = "core-devops-apnortheast2-tfstate" # S3 버킷명
+    versioning             = true                               # S3 버저닝 여부
+    server_side_encryption = true                               # S3 Object 암호화 여부
+    public_access_block    = true                               # S3 Public Access 제한 여부
   },
   "jenkins" = {
-    create                 = true                       # 생성 여부 지정
-    bucket_name            = "terraform-s3-ymkim-state" # S3 버킷명
-    versioning             = false                      # S3 버저닝 여부
-    server_side_encryption = false                      # S3 Object 암호화 여부
-    public_access_block    = true                       # S3 Public Access 제한 여부
+    create                 = true                               # 생성 여부 지정
+    bucket_name            = "core-devops-apnortheast2-jenkins" # S3 버킷명
+    versioning             = false                              # S3 버저닝 여부
+    server_side_encryption = false                              # S3 Object 암호화 여부
+    public_access_block    = true                               # S3 Public Access 제한 여부
   }
 }
 
