@@ -186,6 +186,63 @@ variable "ecr_repository" {
 }
 
 ####################
+# IAM 설정
+####################
+variable "iam_custom_role" {
+  description = "IAM Role 생성"
+  type = map(object({
+    name        = optional(string)
+    description = optional(string)
+    version     = optional(string)
+    statement = object({
+      Sid    = optional(string)
+      Action = string
+      Effect = string
+      Principal = object({
+        Service = string
+      })
+    })
+    env = string
+  }))
+}
+
+# 사용자가 생성하는 정책
+variable "iam_custom_policy" {
+  description = "IAM 사용자 생성 정책"
+  type = map(object({
+    name        = optional(string)
+    description = optional(string)
+    version     = optional(string)
+    statement = optional(object({
+      Sid      = optional(string)
+      Action   = optional(list(string))
+      Effect   = optional(string)
+      Resource = optional(list(string))
+    }))
+    env = string
+  }))
+}
+
+# 관리형 정책
+variable "iam_managed_policy" {
+  description = "IAM 관리형 정책"
+  type = map(object({
+    name = string
+    arn  = string
+    env  = string
+  }))
+}
+
+variable "iam_policy_attachment" {
+  description = "IAM Policy를 Role에 연결"
+  type = map(object({
+    role_name   = optional(string)
+    policy_name = optional(string)
+    policy_type = optional(string)
+  }))
+}
+
+####################
 # ECS 클러스터 설정
 ####################
 # ECS 클러스터 생성
