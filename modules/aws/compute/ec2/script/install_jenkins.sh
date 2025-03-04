@@ -1,8 +1,6 @@
 #!/bin/bash
-########################
 # Jenkins 베어메탈 설치 참고 URL
 # - https://medium.com/@navidehbaghaifar/how-to-install-jenkins-on-an-ec2-with-terraform-d5e9ed3cdcd9
-########################
 
 ##############################
 # 1. 시스템 설정 및 기본 패키지 설치
